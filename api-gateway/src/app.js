@@ -8,6 +8,10 @@ const swaggerUi = require('swagger-ui-express');
 const healthRoutes = require('./routes/healthRoutes');
 const { getSwaggerUiOptions } = require('./utils/docsConfig');
 const { notFound, errorHandler } = require('./middleware/errorMiddleware');
+const {
+  metricsMiddleware,
+  metricsHandler
+} = require('./middleware/metricsMiddleware');
 
 const app = express();
 const uploadsDir = process.env.UPLOADS_DIR || path.join(process.cwd(), 'uploads');
@@ -26,6 +30,7 @@ const sendProxyError = (serviceName, res, err) => {
 
 app.use(cors());
 app.use(morgan('dev'));
+app.use(metricsMiddleware);
 app.use('/docs/openapi', express.static(path.join(__dirname, 'docs')));
 
 app.use(
@@ -37,6 +42,7 @@ app.use(
 );
 
 app.use('/health', healthRoutes);
+app.get('/metrics', metricsHandler);
 
 app.use(
   '/auth',

@@ -4,10 +4,15 @@ const internalUserRoutes = require('./routes/internalUserRoutes');
 const swaggerUi = require('swagger-ui-express');
 const YAML = require('yamljs');
 const path = require('path');
+const {
+  metricsMiddleware,
+  metricsHandler
+} = require('./middleware/metricsMiddleware');
 
 const app = express();
 
 app.use(express.json());
+app.use(metricsMiddleware);
 
 const swaggerDocument = YAML.load(
   path.join(__dirname, 'docs', 'openapi.yaml')
@@ -21,6 +26,8 @@ app.get('/health', (req, res) => {
     service: 'auth-service'
   });
 });
+
+app.get('/metrics', metricsHandler);
 
 app.use('/auth', authRoutes);
 app.use('/api/internal', internalUserRoutes);
