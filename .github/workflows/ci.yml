@@ -24,6 +24,17 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Install service dependencies
+        run: |
+          npm ci --prefix api-gateway
+          npm ci --prefix auth-service
+          npm ci --prefix register-service
+          npm ci --prefix target-service
+          npm ci --prefix score-service
+          npm ci --prefix clock-service
+          npm ci --prefix mail-service
+          npm ci --prefix read-service
+
       - name: Run lint
         run: npm run lint
 
