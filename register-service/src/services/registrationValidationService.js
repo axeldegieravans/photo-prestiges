@@ -1,30 +1,25 @@
 const mongoose = require('mongoose');
 const { safeParseJson, fetchWithRetry } = require('../utils/httpClient');
+const { createHttpError } = require('../utils/httpError');
 
 const PARTICIPANT = 'PARTICIPANT';
 const OWNER = 'OWNER';
 
 const assertParticipant = (user) => {
   if (!user || user.role !== PARTICIPANT) {
-    const error = new Error('Only participants can perform this action');
-    error.statusCode = 403;
-    throw error;
+    throw createHttpError(403, 'Only participants can perform this action');
   }
 };
 
 const assertOwner = (user) => {
   if (!user || user.role !== OWNER) {
-    const error = new Error('Only owners can perform this action');
-    error.statusCode = 403;
-    throw error;
+    throw createHttpError(403, 'Only owners can perform this action');
   }
 };
 
 const validateRegistrationId = (registrationId) => {
   if (!mongoose.Types.ObjectId.isValid(registrationId)) {
-    const error = new Error('Invalid registration id');
-    error.statusCode = 400;
-    throw error;
+    throw createHttpError(400, 'Invalid registration id');
   }
 };
 
@@ -32,30 +27,22 @@ const fetchTargetById = async (targetId) => {
   const targetServiceUrl = process.env.TARGET_SERVICE_URL;
 
   if (!targetServiceUrl) {
-    const error = new Error('TARGET_SERVICE_URL is not configured');
-    error.statusCode = 500;
-    throw error;
+    throw createHttpError(500, 'TARGET_SERVICE_URL is not configured');
   }
 
   const response = await fetchWithRetry(`${targetServiceUrl}/api/targets/${targetId}`);
   const result = await safeParseJson(response);
 
   if (response.status === 404) {
-    const error = new Error('Target not found');
-    error.statusCode = 404;
-    throw error;
+    throw createHttpError(404, 'Target not found');
   }
 
   if (!response.ok) {
-    const error = new Error('Could not validate target');
-    error.statusCode = 503;
-    throw error;
+    throw createHttpError(503, 'Could not validate target');
   }
 
   if (!result || !result.data) {
-    const error = new Error('Invalid target-service response');
-    error.statusCode = 503;
-    throw error;
+    throw createHttpError(503, 'Invalid target-service response');
   }
 
   return result.data;
@@ -63,15 +50,11 @@ const fetchTargetById = async (targetId) => {
 
 const assertTargetOwner = (target, user) => {
   if (!target || !target.ownerId) {
-    const error = new Error('Target owner could not be determined');
-    error.statusCode = 503;
-    throw error;
+    throw createHttpError(503, 'Target owner could not be determined');
   }
 
   if (String(target.ownerId) !== String(user.userId)) {
-    const error = new Error('You can only access registrations for your own target');
-    error.statusCode = 403;
-    throw error;
+    throw createHttpError(403, 'You can only access registrations for your own target');
   }
 };
 
@@ -79,23 +62,17 @@ const validateTargetForRegistration = async (targetId) => {
   const target = await fetchTargetById(targetId);
 
   if (target.status !== 'OPEN') {
-    const error = new Error('Target is closed');
-    error.statusCode = 403;
-    throw error;
+    throw createHttpError(403, 'Target is closed');
   }
 
   const deadline = new Date(target.deadline);
 
   if (Number.isNaN(deadline.getTime())) {
-    const error = new Error('Target has an invalid deadline');
-    error.statusCode = 500;
-    throw error;
+    throw createHttpError(500, 'Target has an invalid deadline');
   }
 
   if (deadline <= new Date()) {
-    const error = new Error('Target deadline has already passed');
-    error.statusCode = 403;
-    throw error;
+    throw createHttpError(403, 'Target deadline has already passed');
   }
 
   return target;

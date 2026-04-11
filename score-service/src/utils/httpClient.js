@@ -1,3 +1,5 @@
+const { createHttpError } = require('./httpError');
+
 const safeParseJson = async (response) => {
   try {
     return await response.json();
@@ -30,8 +32,7 @@ const fetchWithRetry = async (url, options = {}) => {
         return response;
       }
 
-      lastError = new Error('Internal service request failed');
-      lastError.statusCode = 503;
+      lastError = createHttpError(503, 'Internal service request failed');
 
       if (attempt === maxAttempts) {
         return response;
@@ -47,8 +48,7 @@ const fetchWithRetry = async (url, options = {}) => {
     await sleep(getRetryDelayMs() * attempt);
   }
 
-  const error = new Error('Internal service is unavailable');
-  error.statusCode = 503;
+  const error = createHttpError(503, 'Internal service is unavailable');
   error.cause = lastError;
   throw error;
 };

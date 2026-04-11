@@ -7,6 +7,7 @@ const {
   fetchMyRegistrations,
   fetchMySubmissions
 } = require('./readApiService');
+const { createHttpError } = require('../utils/httpError');
 
 const OWNER = 'OWNER';
 const PARTICIPANT = 'PARTICIPANT';
@@ -29,17 +30,13 @@ const getBestSubmission = (submissions) => {
 
 const assertOwner = (user) => {
   if (!user || user.role !== OWNER) {
-    const error = new Error('Only owners can perform this action');
-    error.statusCode = 403;
-    throw error;
+    throw createHttpError(403, 'Only owners can perform this action');
   }
 };
 
 const assertParticipant = (user) => {
   if (!user || user.role !== PARTICIPANT) {
-    const error = new Error('Only participants can perform this action');
-    error.statusCode = 403;
-    throw error;
+    throw createHttpError(403, 'Only participants can perform this action');
   }
 };
 
@@ -109,17 +106,13 @@ const getOwnerTargetOverview = async ({ targetId, user, authHeader }) => {
   assertOwner(user);
 
   if (!targetId) {
-    const error = new Error('targetId is required');
-    error.statusCode = 400;
-    throw error;
+    throw createHttpError(400, 'targetId is required');
   }
 
   const target = await fetchTargetById(targetId);
 
   if (String(target.ownerId) !== String(user.userId)) {
-    const error = new Error('You can only access your own target overview');
-    error.statusCode = 403;
-    throw error;
+    throw createHttpError(403, 'You can only access your own target overview');
   }
 
   const [registrations, submissions] = await Promise.all([

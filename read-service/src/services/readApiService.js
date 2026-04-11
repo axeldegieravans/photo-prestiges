@@ -1,11 +1,10 @@
 const { buildQueryString } = require('../utils/queryString');
 const { safeParseJson } = require('../utils/httpJson');
+const { createHttpError } = require('../utils/httpError');
 
 const fetchJson = async ({ serviceName, baseUrl, path, authHeader }) => {
   if (!baseUrl) {
-    const error = new Error(`${serviceName} URL is not configured`);
-    error.statusCode = 500;
-    throw error;
+    throw createHttpError(500, `${serviceName} URL is not configured`);
   }
 
   try {
@@ -20,12 +19,10 @@ const fetchJson = async ({ serviceName, baseUrl, path, authHeader }) => {
     const result = await safeParseJson(response);
 
     if (!response.ok) {
-      const error = new Error(
+      throw createHttpError(
+        response.status >= 500 ? 503 : response.status,
         result?.message || `${serviceName} request failed`
       );
-
-      error.statusCode = response.status >= 500 ? 503 : response.status;
-      throw error;
     }
 
     return result;
@@ -34,9 +31,7 @@ const fetchJson = async ({ serviceName, baseUrl, path, authHeader }) => {
       throw err;
     }
 
-    const error = new Error(`${serviceName} is unavailable`);
-    error.statusCode = 503;
-    throw error;
+    throw createHttpError(503, `${serviceName} is unavailable`);
   }
 };
 

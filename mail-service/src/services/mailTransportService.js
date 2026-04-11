@@ -3,6 +3,7 @@ const {
   validateEmailLike,
   validateNonEmptyString
 } = require('./mailValidationService');
+const { createHttpError } = require('../utils/httpError');
 
 let cachedTransporter = null;
 let cachedMode = null;
@@ -60,9 +61,7 @@ const getTransporter = async () => {
     };
   }
 
-  const error = new Error('MAIL_MODE must be either ethereal or console');
-  error.statusCode = 500;
-  throw error;
+  throw createHttpError(500, 'MAIL_MODE must be either ethereal or console');
 };
 
 const sendMailInternal = async ({ to, subject, text }) => {

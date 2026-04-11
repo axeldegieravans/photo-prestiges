@@ -5,6 +5,7 @@ const {
   deleteFileIfExists
 } = require('../utils/fileStorage');
 const { normalizePagination } = require('../utils/pagination');
+const { createHttpError } = require('../utils/httpError');
 const {
   assertOwner,
   assertTargetOwnership,
@@ -39,25 +40,20 @@ const createTarget = async ({ data, user, file }) => {
       await deleteFileIfExists(file.path);
     }
 
-    const error = new Error(
+    throw createHttpError(
+      400,
       'title, description, city, radiusMeters and deadline are required'
     );
-    error.statusCode = 400;
-    throw error;
   }
 
   if (!file) {
-    const error = new Error('image file is required');
-    error.statusCode = 400;
-    throw error;
+    throw createHttpError(400, 'image file is required');
   }
 
   if (Number.isNaN(Number(radiusMeters)) || Number(radiusMeters) <= 0) {
     await deleteFileIfExists(file.path);
 
-    const error = new Error('radiusMeters must be a number greater than 0');
-    error.statusCode = 400;
-    throw error;
+    throw createHttpError(400, 'radiusMeters must be a number greater than 0');
   }
 
   const parsedDeadline = new Date(deadline);
@@ -65,17 +61,13 @@ const createTarget = async ({ data, user, file }) => {
   if (Number.isNaN(parsedDeadline.getTime())) {
     await deleteFileIfExists(file.path);
 
-    const error = new Error('deadline must be a valid date');
-    error.statusCode = 400;
-    throw error;
+    throw createHttpError(400, 'deadline must be a valid date');
   }
 
   if (parsedDeadline <= new Date()) {
     await deleteFileIfExists(file.path);
 
-    const error = new Error('deadline must be in the future');
-    error.statusCode = 400;
-    throw error;
+    throw createHttpError(400, 'deadline must be in the future');
   }
 
   validateCoordinates({ latitude, longitude });
@@ -220,9 +212,7 @@ const finalizeTargetInternal = async ({ targetId, data }) => {
   const parsedClosedAt = data.closedAt ? new Date(data.closedAt) : new Date();
 
   if (Number.isNaN(parsedClosedAt.getTime())) {
-    const error = new Error('closedAt must be a valid date');
-    error.statusCode = 400;
-    throw error;
+    throw createHttpError(400, 'closedAt must be a valid date');
   }
 
   let parsedWinningSubmittedAt = null;
@@ -234,9 +224,7 @@ const finalizeTargetInternal = async ({ targetId, data }) => {
     parsedWinningSubmittedAt = new Date(data.winningSubmittedAt);
 
     if (Number.isNaN(parsedWinningSubmittedAt.getTime())) {
-      const error = new Error('winningSubmittedAt must be a valid date');
-      error.statusCode = 400;
-      throw error;
+      throw createHttpError(400, 'winningSubmittedAt must be a valid date');
     }
   }
 
@@ -250,9 +238,7 @@ const finalizeTargetInternal = async ({ targetId, data }) => {
       normalizedWinningScore < 0 ||
       normalizedWinningScore > 100
     ) {
-      const error = new Error('winningScore must be a number between 0 and 100');
-      error.statusCode = 400;
-      throw error;
+      throw createHttpError(400, 'winningScore must be a number between 0 and 100');
     }
   }
 

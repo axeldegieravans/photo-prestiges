@@ -1,4 +1,5 @@
 const { safeParseJson } = require('./httpJson');
+const { createHttpError } = require('./httpError');
 
 const circuitStates = new Map();
 
@@ -52,8 +53,7 @@ const assertCircuitClosed = (key, serviceName) => {
     return;
   }
 
-  const error = new Error(`${serviceName} circuit is open`);
-  error.statusCode = 503;
+  const error = createHttpError(503, `${serviceName} circuit is open`);
   error.retryable = true;
   throw error;
 };
@@ -86,8 +86,7 @@ const withTimeout = ({ serviceName, url, options }) => {
     signal: controller.signal
   }).finally(() => clearTimeout(timeout)).catch((err) => {
     if (err.name === 'AbortError') {
-      const error = new Error(`${serviceName} request timed out`);
-      error.statusCode = 503;
+      const error = createHttpError(503, `${serviceName} request timed out`);
       error.retryable = true;
       throw error;
     }
@@ -105,9 +104,7 @@ const fetchJson = async ({
   internalToken
 }) => {
   if (!baseUrl) {
-    const error = new Error(`${serviceName} URL is not configured`);
-    error.statusCode = 500;
-    throw error;
+    throw createHttpError(500, `${serviceName} URL is not configured`);
   }
 
   const headers = {};
@@ -141,11 +138,10 @@ const fetchJson = async ({
       const result = await safeParseJson(response);
 
       if (!response.ok) {
-        const error = new Error(
+        const error = createHttpError(
+          response.status >= 500 ? 503 : response.status,
           result?.message || `${serviceName} request failed`
         );
-
-        error.statusCode = response.status >= 500 ? 503 : response.status;
         error.retryable = response.status >= 500;
         throw error;
       }
@@ -156,8 +152,7 @@ const fetchJson = async ({
       lastError = err;
 
       if (!err.statusCode) {
-        lastError = new Error(`${serviceName} is unavailable`);
-        lastError.statusCode = 503;
+        lastError = createHttpError(503, `${serviceName} is unavailable`);
         lastError.retryable = true;
       }
 

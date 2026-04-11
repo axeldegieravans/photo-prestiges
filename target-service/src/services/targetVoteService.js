@@ -3,6 +3,7 @@ const {
   assertParticipant,
   getTargetOrThrow
 } = require('./targetValidationService');
+const { createHttpError } = require('../utils/httpError');
 
 const formatVoteResponse = (target, myVote) => {
   return {
@@ -22,17 +23,13 @@ const voteOnTarget = async ({ targetId, user, vote }) => {
   const normalizedVote = String(vote || '').toUpperCase();
 
   if (!['UP', 'DOWN'].includes(normalizedVote)) {
-    const error = new Error('vote must be UP or DOWN');
-    error.statusCode = 400;
-    throw error;
+    throw createHttpError(400, 'vote must be UP or DOWN');
   }
 
   const target = await getTargetOrThrow(targetId);
 
   if (String(target.ownerId) === String(user.userId)) {
-    const error = new Error('You cannot vote on your own target');
-    error.statusCode = 403;
-    throw error;
+    throw createHttpError(403, 'You cannot vote on your own target');
   }
 
   const existingVote = await TargetVote.findOne({

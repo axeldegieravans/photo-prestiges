@@ -1,21 +1,18 @@
 const { safeParseJson, fetchWithRetry } = require('../utils/httpClient');
+const { createHttpError } = require('../utils/httpError');
 
 const PARTICIPANT = 'PARTICIPANT';
 const OWNER = 'OWNER';
 
 const assertParticipant = (user) => {
   if (!user || user.role !== PARTICIPANT) {
-    const error = new Error('Only participants can perform this action');
-    error.statusCode = 403;
-    throw error;
+    throw createHttpError(403, 'Only participants can perform this action');
   }
 };
 
 const assertOwner = (user) => {
   if (!user || user.role !== OWNER) {
-    const error = new Error('Only owners can perform this action');
-    error.statusCode = 403;
-    throw error;
+    throw createHttpError(403, 'Only owners can perform this action');
   }
 };
 
@@ -23,30 +20,22 @@ const fetchTargetById = async (targetId) => {
   const targetServiceUrl = process.env.TARGET_SERVICE_URL;
 
   if (!targetServiceUrl) {
-    const error = new Error('TARGET_SERVICE_URL is not configured');
-    error.statusCode = 500;
-    throw error;
+    throw createHttpError(500, 'TARGET_SERVICE_URL is not configured');
   }
 
   const response = await fetchWithRetry(`${targetServiceUrl}/api/targets/${targetId}`);
   const result = await safeParseJson(response);
 
   if (response.status === 404) {
-    const error = new Error('Target not found');
-    error.statusCode = 404;
-    throw error;
+    throw createHttpError(404, 'Target not found');
   }
 
   if (!response.ok) {
-    const error = new Error('Could not validate target');
-    error.statusCode = 503;
-    throw error;
+    throw createHttpError(503, 'Could not validate target');
   }
 
   if (!result || !result.data) {
-    const error = new Error('Invalid target-service response');
-    error.statusCode = 503;
-    throw error;
+    throw createHttpError(503, 'Invalid target-service response');
   }
 
   return result.data;
@@ -56,9 +45,7 @@ const fetchMyRegistrations = async (authHeader) => {
   const registerServiceUrl = process.env.REGISTER_SERVICE_URL;
 
   if (!registerServiceUrl) {
-    const error = new Error('REGISTER_SERVICE_URL is not configured');
-    error.statusCode = 500;
-    throw error;
+    throw createHttpError(500, 'REGISTER_SERVICE_URL is not configured');
   }
 
   const response = await fetchWithRetry(
@@ -73,27 +60,19 @@ const fetchMyRegistrations = async (authHeader) => {
   const result = await safeParseJson(response);
 
   if (response.status === 401) {
-    const error = new Error('Unauthorized while validating registration');
-    error.statusCode = 401;
-    throw error;
+    throw createHttpError(401, 'Unauthorized while validating registration');
   }
 
   if (response.status === 403) {
-    const error = new Error('Only participants can submit for targets');
-    error.statusCode = 403;
-    throw error;
+    throw createHttpError(403, 'Only participants can submit for targets');
   }
 
   if (!response.ok) {
-    const error = new Error('Could not validate registration');
-    error.statusCode = 503;
-    throw error;
+    throw createHttpError(503, 'Could not validate registration');
   }
 
   if (!result || !Array.isArray(result.items)) {
-    const error = new Error('Invalid register-service response');
-    error.statusCode = 503;
-    throw error;
+    throw createHttpError(503, 'Invalid register-service response');
   }
 
   return result.items;
@@ -107,29 +86,21 @@ const validateSubmissionRules = async ({
   const target = await fetchTargetById(targetId);
 
   if (String(target.ownerId) === String(participantId)) {
-    const error = new Error('You cannot submit a photo for your own target');
-    error.statusCode = 403;
-    throw error;
+    throw createHttpError(403, 'You cannot submit a photo for your own target');
   }
 
   if (target.status !== 'OPEN') {
-    const error = new Error('Target is closed');
-    error.statusCode = 403;
-    throw error;
+    throw createHttpError(403, 'Target is closed');
   }
 
   const deadline = new Date(target.deadline);
 
   if (Number.isNaN(deadline.getTime())) {
-    const error = new Error('Target has an invalid deadline');
-    error.statusCode = 500;
-    throw error;
+    throw createHttpError(500, 'Target has an invalid deadline');
   }
 
   if (deadline <= new Date()) {
-    const error = new Error('Target deadline has already passed');
-    error.statusCode = 403;
-    throw error;
+    throw createHttpError(403, 'Target deadline has already passed');
   }
 
   const registrations = await fetchMyRegistrations(authHeader);
@@ -138,11 +109,10 @@ const validateSubmissionRules = async ({
   );
 
   if (!isRegistered) {
-    const error = new Error(
+    throw createHttpError(
+      403,
       'You must be registered for this target before submitting'
     );
-    error.statusCode = 403;
-    throw error;
   }
 
   return target;
