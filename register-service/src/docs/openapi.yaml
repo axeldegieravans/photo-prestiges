@@ -1,0 +1,141 @@
+openapi: 3.0.3
+info:
+  title: Registration Service API
+  version: 1.0.0
+
+servers:
+  - url: http://localhost:3000
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+paths:
+  /api/registrations:
+    post:
+      summary: Create registration
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                targetId:
+                  type: string
+      responses:
+        '201':
+          description: Registration created
+        '400':
+          description: Bad request
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+
+  /api/registrations/me:
+    get:
+      summary: Get my registrations
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Registrations returned
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+
+  /api/registrations/target/{targetId}:
+    get:
+      summary: Get registrations by target
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: targetId
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Registrations returned
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+
+  /api/registrations/{id}:
+    delete:
+      summary: Delete registration
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Registration deleted
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+        '404':
+          description: Registration not found
+
+  /api/registrations/target/{targetId}/close:
+    patch:
+      summary: Close registrations for target
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: targetId
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Registrations closed
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+
+  /api/internal/registrations/target/{targetId}:
+    get:
+      summary: Internal get registrations by target
+      parameters:
+        - in: path
+          name: targetId
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Registrations returned
+        '401':
+          description: Unauthorized
+
+  /api/internal/registrations/target/{targetId}/close:
+    patch:
+      summary: Internal close registrations for target
+      parameters:
+        - in: path
+          name: targetId
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Registrations closed
+        '401':
+          description: Unauthorized

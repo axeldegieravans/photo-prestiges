@@ -1,0 +1,159 @@
+services:
+  mongo:
+    image: mongo:7
+    container_name: photo-prestiges-mongo
+    restart: unless-stopped
+    volumes:
+      - mongo_data:/data/db
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  rabbitmq:
+    image: rabbitmq:4-management
+    container_name: photo-prestiges-rabbitmq
+    restart: unless-stopped
+    ports:
+      - "15672:15672"
+    environment:
+      RABBITMQ_DEFAULT_USER: photo
+      RABBITMQ_DEFAULT_PASS: photo123
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  auth-service:
+    build: ./auth-service
+    restart: unless-stopped
+    env_file:
+      - ./auth-service/.env
+    depends_on:
+      mongo:
+        condition: service_healthy
+
+  register-service:
+    build: ./register-service
+    restart: unless-stopped
+    env_file:
+      - ./register-service/.env
+    depends_on:
+      mongo:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      target-service:
+        condition: service_started
+
+  target-service:
+    build: ./target-service
+    restart: unless-stopped
+    env_file:
+      - ./target-service/.env
+    volumes:
+      - uploads_data:/app/uploads
+    depends_on:
+      mongo:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+
+  score-service:
+    build: ./score-service
+    restart: unless-stopped
+    env_file:
+      - ./score-service/.env
+    volumes:
+      - uploads_data:/app/uploads
+    depends_on:
+      mongo:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      target-service:
+        condition: service_started
+      register-service:
+        condition: service_started
+
+  read-service:
+    build: ./read-service
+    restart: unless-stopped
+    env_file:
+      - ./read-service/.env
+    depends_on:
+      target-service:
+        condition: service_started
+      register-service:
+        condition: service_started
+      score-service:
+        condition: service_started
+
+  clock-service:
+    build: ./clock-service
+    restart: unless-stopped
+    env_file:
+      - ./clock-service/.env
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+      target-service:
+        condition: service_started
+      register-service:
+        condition: service_started
+      score-service:
+        condition: service_started
+      auth-service:
+        condition: service_started
+
+  mail-service:
+    build: ./mail-service
+    restart: unless-stopped
+    env_file:
+      - ./mail-service/.env
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+
+  api-gateway:
+    build: ./api-gateway
+    restart: unless-stopped
+    env_file:
+      - ./api-gateway/.env
+    volumes:
+      - uploads_data:/app/uploads:ro
+    ports:
+      - "3000:3000"
+    depends_on:
+      auth-service:
+        condition: service_started
+      register-service:
+        condition: service_started
+      target-service:
+        condition: service_started
+      score-service:
+        condition: service_started
+      read-service:
+        condition: service_started
+      clock-service:
+        condition: service_started
+
+  demo-frontend:
+    build: ./demo-frontend
+    restart: unless-stopped
+    environment:
+      PORT: 5173
+    ports:
+      - "5173:5173"
+    depends_on:
+      api-gateway:
+        condition: service_started
+
+volumes:
+  mongo_data:
+  rabbitmq_data:
+  uploads_data:

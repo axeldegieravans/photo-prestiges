@@ -1,0 +1,129 @@
+openapi: 3.0.3
+info:
+  title: Score Service API
+  version: 1.0.0
+
+servers:
+  - url: http://localhost:3000
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+paths:
+  /api/submissions:
+    post:
+      summary: Create submission
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                targetId:
+                  type: string
+                image:
+                  type: string
+                  format: binary
+      responses:
+        '201':
+          description: Submission created
+        '400':
+          description: Bad request
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+
+  /api/submissions/me:
+    get:
+      summary: Get my submissions
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Submissions returned
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+
+  /api/submissions/me/{targetId}:
+    get:
+      summary: Get my submission for target
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: targetId
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Submission returned
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+        '404':
+          description: Submission not found
+
+  /api/submissions/target/{targetId}:
+    get:
+      summary: Get submissions by target
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: targetId
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Submissions returned
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+
+  /api/submissions/{id}:
+    delete:
+      summary: Delete submission
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Submission deleted
+        '401':
+          description: Unauthorized
+        '404':
+          description: Submission not found
+
+  /api/internal/submissions/target/{targetId}:
+    get:
+      summary: Internal get submissions by target
+      parameters:
+        - in: path
+          name: targetId
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Submissions returned
+        '401':
+          description: Unauthorized

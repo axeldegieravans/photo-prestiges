@@ -1,0 +1,454 @@
+openapi: 3.0.3
+info:
+  title: Photo Prestiges Gateway Public API
+  version: 1.0.0
+  description: Public endpoints exposed through the API Gateway for owners and participants.
+servers:
+  - url: http://localhost:3000
+tags:
+  - name: Auth
+  - name: Targets
+  - name: Registrations
+  - name: Submissions
+  - name: Read
+  - name: Assets
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  parameters:
+    Page:
+      in: query
+      name: page
+      schema:
+        type: integer
+        minimum: 1
+    Limit:
+      in: query
+      name: limit
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 100
+paths:
+  /auth/register:
+    post:
+      tags: [Auth]
+      summary: Register an owner or participant
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name, email, password, role]
+              properties:
+                name:
+                  type: string
+                email:
+                  type: string
+                  format: email
+                password:
+                  type: string
+                role:
+                  type: string
+                  enum: [OWNER, PARTICIPANT]
+      responses:
+        '201':
+          description: User registered
+        '400':
+          description: Invalid request
+        '409':
+          description: Email already exists
+  /auth/login:
+    post:
+      tags: [Auth]
+      summary: Login and receive a JWT
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, password]
+              properties:
+                email:
+                  type: string
+                  format: email
+                password:
+                  type: string
+      responses:
+        '200':
+          description: Login successful
+        '401':
+          description: Invalid credentials
+  /auth/me:
+    get:
+      tags: [Auth]
+      summary: Get the current authenticated user
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Current user returned
+        '401':
+          description: Unauthorized
+  /api/targets:
+    get:
+      tags: [Targets]
+      summary: List targets with paging and filters
+      parameters:
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/Limit'
+        - in: query
+          name: city
+          schema:
+            type: string
+        - in: query
+          name: status
+          schema:
+            type: string
+            enum: [OPEN, CLOSED]
+        - in: query
+          name: search
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Targets returned
+    post:
+      tags: [Targets]
+      summary: Create a target as an owner
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [title, description, city, radiusMeters, deadline, image]
+              properties:
+                title:
+                  type: string
+                description:
+                  type: string
+                city:
+                  type: string
+                latitude:
+                  type: number
+                longitude:
+                  type: number
+                radiusMeters:
+                  type: number
+                deadline:
+                  type: string
+                  format: date-time
+                image:
+                  type: string
+                  format: binary
+      responses:
+        '201':
+          description: Target created
+        '400':
+          description: Invalid request
+        '401':
+          description: Unauthorized
+        '403':
+          description: Only owners can create targets
+  /api/targets/me:
+    get:
+      tags: [Targets]
+      summary: List targets owned by the current owner
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/Limit'
+        - in: query
+          name: status
+          schema:
+            type: string
+            enum: [OPEN, CLOSED]
+      responses:
+        '200':
+          description: Owner targets returned
+  /api/targets/{id}:
+    get:
+      tags: [Targets]
+      summary: Get a target by id
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Target returned
+        '404':
+          description: Target not found
+    delete:
+      tags: [Targets]
+      summary: Delete an owned target
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Target deleted
+        '403':
+          description: Forbidden
+        '404':
+          description: Target not found
+  /api/targets/{id}/vote:
+    post:
+      tags: [Targets]
+      summary: Vote thumbs up or down on a target
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [vote]
+              properties:
+                vote:
+                  type: string
+                  enum: [UP, DOWN]
+      responses:
+        '200':
+          description: Vote saved
+  /api/registrations:
+    post:
+      tags: [Registrations]
+      summary: Register for a target as a participant
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [targetId]
+              properties:
+                targetId:
+                  type: string
+      responses:
+        '201':
+          description: Registration created
+        '409':
+          description: Already registered
+  /api/registrations/me:
+    get:
+      tags: [Registrations]
+      summary: List my registrations
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/Limit'
+      responses:
+        '200':
+          description: Registrations returned
+  /api/registrations/target/{targetId}:
+    get:
+      tags: [Registrations]
+      summary: List registrations for an owned target
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: targetId
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Registrations returned
+  /api/registrations/{id}:
+    delete:
+      tags: [Registrations]
+      summary: Delete my registration
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Registration deleted
+  /api/submissions:
+    post:
+      tags: [Submissions]
+      summary: Submit a participant photo for scoring
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [targetId, image]
+              properties:
+                targetId:
+                  type: string
+                image:
+                  type: string
+                  format: binary
+      responses:
+        '201':
+          description: Submission scored
+        '403':
+          description: Not registered or target closed
+        '409':
+          description: Already submitted
+  /api/submissions/me:
+    get:
+      tags: [Submissions]
+      summary: List my submissions
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/Limit'
+      responses:
+        '200':
+          description: Submissions returned
+  /api/submissions/me/{targetId}:
+    get:
+      tags: [Submissions]
+      summary: Get my submission for a target
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: targetId
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Submission returned
+  /api/submissions/target/{targetId}:
+    get:
+      tags: [Submissions]
+      summary: List submissions for an owned target
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: targetId
+          required: true
+          schema:
+            type: string
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/Limit'
+      responses:
+        '200':
+          description: Submissions returned
+  /api/submissions/{id}:
+    delete:
+      tags: [Submissions]
+      summary: Delete a submission as the participant or target owner
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Submission deleted
+  /api/read/targets/active:
+    get:
+      tags: [Read]
+      summary: Read model for active targets
+      parameters:
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/Limit'
+        - in: query
+          name: city
+          schema:
+            type: string
+        - in: query
+          name: search
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Active targets returned
+  /api/read/owners/me/dashboard:
+    get:
+      tags: [Read]
+      summary: Owner dashboard
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Dashboard returned
+  /api/read/owners/me/targets/{targetId}/overview:
+    get:
+      tags: [Read]
+      summary: Owner target overview
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: targetId
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Target overview returned
+  /api/read/participants/me/dashboard:
+    get:
+      tags: [Read]
+      summary: Participant dashboard
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Dashboard returned
+  /uploads/{type}/{filename}:
+    get:
+      tags: [Assets]
+      summary: Fetch an uploaded image
+      parameters:
+        - in: path
+          name: type
+          required: true
+          schema:
+            type: string
+            enum: [targets, submissions]
+        - in: path
+          name: filename
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Image returned

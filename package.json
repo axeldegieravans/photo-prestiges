@@ -1,0 +1,11 @@
+{
+  "name": "web",
+  "private": true,
+  "scripts": {
+    "dev": "concurrently -k -n gateway,auth,register,target,score,clock,read \"npm --prefix api-gateway run dev\" \"npm --prefix auth-service run dev\" \"npm --prefix register-service run dev\" \"npm --prefix target-service run dev\" \"npm --prefix score-service run dev\" \"npm --prefix clock-service run dev\" \"npm --prefix read-service run dev\"",
+    "dev:all": "concurrently -k -n gateway,auth,register,target,score,clock,mail,read \"npm --prefix api-gateway run dev\" \"npm --prefix auth-service run dev\" \"npm --prefix register-service run dev\" \"npm --prefix target-service run dev\" \"npm --prefix score-service run dev\" \"npm --prefix clock-service run dev\" \"npm --prefix mail-service run dev\" \"npm --prefix read-service run dev\""
+  },
+  "devDependencies": {
+    "concurrently": "^9.0.1"
+  }
+}

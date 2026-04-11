@@ -1,0 +1,41 @@
+openapi: 3.0.3
+info:
+  title: Photo Prestiges Internal Demo API
+  version: 1.0.0
+  description: Internal/demo endpoints exposed through the gateway for Postman assessment flows.
+servers:
+  - url: http://localhost:3000
+tags:
+  - name: Clock
+components:
+  securitySchemes:
+    internalServiceToken:
+      type: apiKey
+      in: header
+      name: x-internal-service-token
+paths:
+  /api/internal/clock/run:
+    post:
+      tags: [Clock]
+      summary: Manually run the deadline/reminder cycle
+      description: Demo endpoint for triggering the clock service from Postman.
+      security:
+        - internalServiceToken: []
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                now:
+                  type: string
+                  format: date-time
+                  example: '2026-04-11T18:10:00.000Z'
+      responses:
+        '200':
+          description: Clock cycle result
+        '401':
+          description: Internal service token is missing
+        '403':
+          description: Internal service token is invalid

@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Photo Prestiges Demo</title>
+    <link rel="stylesheet" href="./styles.css">
+  </head>
+  <body>
+    <main>
+      <section class="topbar">
+        <div>
+          <p class="eyebrow">Photo Prestiges</p>
+          <h1>Demo console</h1>
+        </div>
+        <label>
+          API base URL
+          <input id="baseUrl" type="url" value="http://localhost:3000">
+        </label>
+      </section>
+
+      <p id="message" class="message" role="status" aria-live="polite">Ready.</p>
+
+      <section class="band">
+        <div class="section-heading">
+          <h2>Account</h2>
+          <p id="sessionStatus">No active session</p>
+        </div>
+
+        <div class="grid two">
+          <form id="ownerAuthForm" class="panel">
+            <h3>Owner login</h3>
+            <label>Name <input name="name" required value="Demo Owner"></label>
+            <label>Email <input name="email" type="email" required value="owner@example.com"></label>
+            <label>Password <input name="password" type="password" required value="password123"></label>
+            <button name="action" value="login" type="submit">Login owner</button>
+            <button name="action" value="register" type="submit" class="secondary">Register owner</button>
+          </form>
+
+          <form id="participantAuthForm" class="panel">
+            <h3>Participant login</h3>
+            <label>Name <input name="name" required value="Demo Participant"></label>
+            <label>Email <input name="email" type="email" required value="participant@example.com"></label>
+            <label>Password <input name="password" type="password" required value="password123"></label>
+            <button name="action" value="login" type="submit">Login participant</button>
+            <button name="action" value="register" type="submit" class="secondary">Register participant</button>
+          </form>
+        </div>
+
+        <div class="session-grid">
+          <button id="useOwnerButton" type="button" class="secondary">Use owner token</button>
+          <button id="useParticipantButton" type="button" class="secondary">Use participant token</button>
+          <button id="logoutButton" type="button" class="secondary">Clear sessions</button>
+        </div>
+      </section>
+
+      <section class="band">
+        <div class="section-heading">
+          <h2>Targets</h2>
+          <button id="loadTargetsButton" type="button">Load targets</button>
+        </div>
+
+        <div class="grid two">
+          <form id="targetForm" class="panel" enctype="multipart/form-data">
+            <h3>Create target</h3>
+            <label>Title <input name="title" required value="Demo target"></label>
+            <label>Description <textarea name="description" required>Recreate this photo as closely as possible.</textarea></label>
+            <label>City <input name="city" required value="Rotterdam"></label>
+            <label>Radius meters <input name="radiusMeters" type="number" min="1" required value="100"></label>
+            <label>Latitude <input name="latitude" type="number" step="any"></label>
+            <label>Longitude <input name="longitude" type="number" step="any"></label>
+            <label>Deadline <input name="deadline" type="datetime-local" required></label>
+            <label>Target image <input name="image" type="file" accept="image/*" required></label>
+            <button type="submit">Create target</button>
+          </form>
+
+          <div class="panel">
+            <h3>Selected target</h3>
+            <p id="selectedTarget">No target selected</p>
+            <form id="registrationForm">
+              <button type="submit">Register for selected target</button>
+            </form>
+            <form id="submissionForm" enctype="multipart/form-data">
+              <label>Submission image <input name="image" type="file" accept="image/*" required></label>
+              <button type="submit">Submit photo</button>
+            </form>
+            <button id="mySubmissionButton" type="button" class="secondary">Load my submission</button>
+          </div>
+        </div>
+
+        <div id="targetsList" class="cards"></div>
+      </section>
+
+      <section class="band">
+        <div class="section-heading">
+          <h2>Owner tools</h2>
+          <button id="ownerDashboardButton" type="button">Load owner dashboard</button>
+        </div>
+
+        <div class="grid two">
+          <div class="panel">
+            <h3>Manual clock run</h3>
+            <label>Internal token <input id="internalToken" type="password" value="photo-prestiges-internal-secret"></label>
+            <button id="runClockButton" type="button">Run clock</button>
+          </div>
+          <div class="panel">
+            <h3>Output</h3>
+            <div id="resultCard" class="result-card">Results will appear here.</div>
+            <pre id="output">Ready.</pre>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <script src="./app.js"></script>
+  </body>
+</html>

@@ -1,0 +1,171 @@
+openapi: 3.0.3
+info:
+  title: Target Service API
+  version: 1.0.0
+
+servers:
+  - url: http://localhost:3000
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+paths:
+  /api/targets:
+    get:
+      summary: Get targets
+      responses:
+        '200':
+          description: Targets returned
+
+    post:
+      summary: Create target
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                title:
+                  type: string
+                description:
+                  type: string
+                city:
+                  type: string
+                latitude:
+                  type: number
+                longitude:
+                  type: number
+                radiusMeters:
+                  type: number
+                deadline:
+                  type: string
+                image:
+                  type: string
+                  format: binary
+      responses:
+        '201':
+          description: Target created
+        '400':
+          description: Bad request
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+
+  /api/targets/me:
+    get:
+      summary: Get my targets
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: My targets returned
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+
+  /api/targets/{id}:
+    get:
+      summary: Get target by id
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Target returned
+        '404':
+          description: Target not found
+
+    delete:
+      summary: Delete target
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Target deleted
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+        '404':
+          description: Target not found
+
+  /api/targets/{id}/vote:
+    post:
+      summary: Vote on target
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                vote:
+                  type: string
+                  enum:
+                    - UP
+                    - DOWN
+      responses:
+        '200':
+          description: Vote saved
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+        '404':
+          description: Target not found
+
+  /api/internal/targets/{targetId}/finalize:
+    patch:
+      summary: Internal finalize target
+      parameters:
+        - in: path
+          name: targetId
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Target finalized
+        '401':
+          description: Unauthorized
+
+  /api/internal/targets/{targetId}/reminder-sent:
+    patch:
+      summary: Internal mark reminder sent
+      parameters:
+        - in: path
+          name: targetId
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Reminder marked
+        '401':
+          description: Unauthorized
