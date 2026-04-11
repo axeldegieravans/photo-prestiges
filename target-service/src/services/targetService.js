@@ -3,7 +3,8 @@ const Target = require('../models/Target');
 const {
   buildTargetImageUrl,
   deleteFileIfExists
-} = require('./targetFileService');
+} = require('../utils/fileStorage');
+const { normalizePagination } = require('../utils/pagination');
 const {
   assertOwner,
   assertTargetOwnership,
@@ -19,17 +20,6 @@ const {
   enqueueTargetCreatedEvent,
   dispatchTargetCreatedEvent
 } = require('./targetEventOutboxService');
-
-const normalizePagination = (page, limit) => {
-  const normalizedPage = Math.max(parseInt(page, 10) || 1, 1);
-  const normalizedLimit = Math.min(Math.max(parseInt(limit, 10) || 10, 1), 100);
-
-  return {
-    page: normalizedPage,
-    limit: normalizedLimit,
-    skip: (normalizedPage - 1) * normalizedLimit
-  };
-};
 
 const createTarget = async ({ data, user, file }) => {
   assertOwner(user);

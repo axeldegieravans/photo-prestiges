@@ -6,7 +6,7 @@ const { normalizePagination } = require('../utils/pagination');
 const {
   buildSubmissionImageUrl,
   deleteFileIfExists
-} = require('./submissionFileService');
+} = require('../utils/fileStorage');
 const {
   assertParticipant,
   assertOwner,

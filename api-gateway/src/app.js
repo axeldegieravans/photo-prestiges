@@ -6,6 +6,7 @@ const { createProxyMiddleware } = require('http-proxy-middleware');
 const swaggerUi = require('swagger-ui-express');
 
 const healthRoutes = require('./routes/healthRoutes');
+const { getSwaggerUiOptions } = require('./utils/docsConfig');
 const { notFound, errorHandler } = require('./middleware/errorMiddleware');
 
 const app = express();
@@ -130,22 +131,7 @@ app.use(
 app.use(
   '/docs',
   swaggerUi.serve,
-  swaggerUi.setup(null, {
-    explorer: true,
-    customSiteTitle: 'Photo Prestiges API Docs',
-    swaggerOptions: {
-      urls: [
-        {
-          url: '/docs/openapi/public.openapi.yaml',
-          name: 'Gateway Public API'
-        },
-        {
-          url: '/docs/openapi/internal.openapi.yaml',
-          name: 'Internal Demo API'
-        }
-      ]
-    }
-  })
+  swaggerUi.setup(null, getSwaggerUiOptions())
 );
 
 app.use(notFound);

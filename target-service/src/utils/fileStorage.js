@@ -4,8 +4,8 @@ const getPublicBaseUrl = () => {
   return process.env.PUBLIC_BASE_URL || 'http://localhost:3000';
 };
 
-const buildSubmissionImageUrl = (filename) => {
-  return `${getPublicBaseUrl()}/uploads/submissions/${filename}`;
+const buildTargetImageUrl = (filename) => {
+  return `${getPublicBaseUrl()}/uploads/targets/${filename}`;
 };
 
 const deleteFileIfExists = async (filePath) => {
@@ -23,6 +23,6 @@ const deleteFileIfExists = async (filePath) => {
 };
 
 module.exports = {
-  buildSubmissionImageUrl,
+  buildTargetImageUrl,
   deleteFileIfExists
 };

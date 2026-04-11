@@ -1,23 +1,5 @@
-const buildQueryString = (params = {}) => {
-  const searchParams = new URLSearchParams();
-
-  Object.entries(params).forEach(([key, value]) => {
-    if (value !== undefined && value !== null && value !== '') {
-      searchParams.set(key, String(value));
-    }
-  });
-
-  const queryString = searchParams.toString();
-  return queryString ? `?${queryString}` : '';
-};
-
-const safeParseJson = async (response) => {
-  try {
-    return await response.json();
-  } catch (error) {
-    return null;
-  }
-};
+const { buildQueryString } = require('../utils/queryString');
+const { safeParseJson } = require('../utils/httpJson');
 
 const fetchJson = async ({ serviceName, baseUrl, path, authHeader }) => {
   if (!baseUrl) {

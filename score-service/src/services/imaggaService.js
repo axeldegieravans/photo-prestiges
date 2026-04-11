@@ -1,12 +1,5 @@
 const fs = require('fs/promises');
-
-const safeParseJson = async (response) => {
-  try {
-    return await response.json();
-  } catch (error) {
-    return null;
-  }
-};
+const { safeParseJson } = require('../utils/httpClient');
 
 const getImaggaConfig = () => {
   const apiKey = process.env.IMAGGA_API_KEY;
