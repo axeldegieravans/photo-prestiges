@@ -11,10 +11,6 @@
 | clock-service | ![clock-service](https://github.com/axeldegieravans/photo-prestiges/actions/workflows/clock-service.yml/badge.svg?branch=devops) |
 | mail-service | ![mail-service](https://github.com/axeldegieravans/photo-prestiges/actions/workflows/mail-service.yml/badge.svg?branch=devops) |
 
-Photo Prestiges is een microservice project voor Cloud Services. Het idee is dat een target owner een foto met locatie/deadline uploadt. Deelnemers kunnen zich inschrijven en daarna proberen om een zo gelijk mogelijke foto te uploaden. Na de deadline bepaalt het systeem automatisch een winnaar en worden mails verstuurd.
-
-Ik heb geen echte GUI nodig voor de opdracht, dus de API is vooral bedoeld om met Postman te testen. Er zit wel een kleine demo frontend in de repo, maar de belangrijkste flow loopt via de API gateway.
-
 ## Services
 
 De services draaien via Docker Compose.
@@ -39,7 +35,7 @@ Daarnaast draaien:
 
 ## Databases
 
-Elke microservice heeft zijn eigen database. Dat is bewust gedaan zodat services niet direct in elkaars tabellen/collections hoeven te zitten.
+De meeste microservices hebben hun eigen database. Dat is bewust gedaan zodat services niet direct in elkaars tabellen/collections hoeven te zitten.
 
 | Database | Service |
 | --- | --- |
