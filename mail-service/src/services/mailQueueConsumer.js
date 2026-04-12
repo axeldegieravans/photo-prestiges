@@ -71,7 +71,7 @@ const startConsumer = async ({
   );
 };
 
-const startMailConsumers = async () => {
+const startMailQueueConsumers = async () => {
   if (channel) {
     return channel;
   }
@@ -113,5 +113,5 @@ const startMailConsumers = async () => {
 };
 
 module.exports = {
-  startMailConsumers
+  startMailQueueConsumers
 };

@@ -81,7 +81,7 @@ const startConsumer = async ({
   );
 };
 
-const startRegistrationConsumers = async () => {
+const startRegistrationEventConsumers = async () => {
   if (channel) {
     return channel;
   }
@@ -147,5 +147,5 @@ const startRegistrationConsumers = async () => {
 };
 
 module.exports = {
-  startRegistrationConsumers
+  startRegistrationEventConsumers
 };

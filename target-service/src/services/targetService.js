@@ -16,7 +16,7 @@ const {
 const { voteOnTarget } = require('./targetVoteService');
 const {
   publishTargetDeleted
-} = require('./rabbitmqPublisher');
+} = require('./targetEventPublisher');
 const {
   enqueueTargetCreatedEvent,
   dispatchTargetCreatedEvent

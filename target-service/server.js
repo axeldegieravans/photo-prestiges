@@ -5,7 +5,7 @@ const connectDB = require('./src/config/db');
 const {
   startTargetEventOutboxWorker
 } = require('./src/services/targetEventOutboxService');
-const { startClockEventConsumer } = require('./src/services/rabbitmqConsumer');
+const { startClockEventConsumer } = require('./src/services/clockEventConsumer');
 
 const PORT = process.env.PORT || 3003;
 

@@ -12,7 +12,7 @@ const { normalizePagination } = require('../utils/pagination');
 const {
   publishRegistrationCreated,
   publishRegistrationDeleted
-} = require('./rabbitmqPublisher');
+} = require('./registrationEventPublisher');
 
 const createRegistration = async ({ targetId, user }) => {
   assertParticipant(user);

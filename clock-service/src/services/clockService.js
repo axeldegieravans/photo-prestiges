@@ -3,7 +3,7 @@ const {
   publishReminderMessage,
   publishCompetitionExpiredEvent,
   publishWinnerDeterminedEvent
-} = require('./rabbitmqPublisher');
+} = require('./clockEventPublisher');
 const TrackedCompetition = require('../models/TrackedCompetition');
 const ClockRegistration = require('../models/ClockRegistration');
 const ClockSubmission = require('../models/ClockSubmission');

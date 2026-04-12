@@ -29,7 +29,7 @@ const resetConnectionState = () => {
   channel = null;
 };
 
-const startTargetDeletedConsumer = async () => {
+const startSubmissionEventConsumers = async () => {
   if (channel) {
     return channel;
   }
@@ -104,5 +104,5 @@ const startTargetDeletedConsumer = async () => {
 };
 
 module.exports = {
-  startTargetDeletedConsumer
+  startSubmissionEventConsumers
 };

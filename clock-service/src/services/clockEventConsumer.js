@@ -105,7 +105,7 @@ const bindConsumer = async ({
   );
 };
 
-const startClockConsumers = async () => {
+const startClockEventConsumers = async () => {
   if (channel) {
     return channel;
   }
@@ -262,5 +262,5 @@ const startClockConsumers = async () => {
 };
 
 module.exports = {
-  startClockConsumers
+  startClockEventConsumers
 };

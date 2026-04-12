@@ -16,7 +16,7 @@ const {
 const {
   publishSubmissionCreated,
   publishSubmissionDeleted
-} = require('./rabbitmqPublisher');
+} = require('./submissionEventPublisher');
 
 const PARTICIPANT = 'PARTICIPANT';
 const OWNER = 'OWNER';
