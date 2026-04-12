@@ -1,5 +1,16 @@
 # Photo Prestiges
 
+| CI | Status |
+| --- | --- |
+| All checks | ![CI](https://github.com/axeldegieravans/photo-prestiges/actions/workflows/ci.yml/badge.svg?branch=devops) |
+| api-gateway | ![api-gateway](https://github.com/axeldegieravans/photo-prestiges/actions/workflows/api-gateway.yml/badge.svg?branch=devops) |
+| auth-service | ![auth-service](https://github.com/axeldegieravans/photo-prestiges/actions/workflows/auth-service.yml/badge.svg?branch=devops) |
+| target-service | ![target-service](https://github.com/axeldegieravans/photo-prestiges/actions/workflows/target-service.yml/badge.svg?branch=devops) |
+| register-service | ![register-service](https://github.com/axeldegieravans/photo-prestiges/actions/workflows/register-service.yml/badge.svg?branch=devops) |
+| score-service | ![score-service](https://github.com/axeldegieravans/photo-prestiges/actions/workflows/score-service.yml/badge.svg?branch=devops) |
+| clock-service | ![clock-service](https://github.com/axeldegieravans/photo-prestiges/actions/workflows/clock-service.yml/badge.svg?branch=devops) |
+| mail-service | ![mail-service](https://github.com/axeldegieravans/photo-prestiges/actions/workflows/mail-service.yml/badge.svg?branch=devops) |
+
 Photo Prestiges is een microservice project voor Cloud Services. Het idee is dat een target owner een foto met locatie/deadline uploadt. Deelnemers kunnen zich inschrijven en daarna proberen om een zo gelijk mogelijke foto te uploaden. Na de deadline bepaalt het systeem automatisch een winnaar en worden mails verstuurd.
 
 Ik heb geen echte GUI nodig voor de opdracht, dus de API is vooral bedoeld om met Postman te testen. Er zit wel een kleine demo frontend in de repo, maar de belangrijkste flow loopt via de API gateway.
