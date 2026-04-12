@@ -17,7 +17,6 @@ De services draaien via Docker Compose.
 | `score-service` | Deelnemerfoto upload, Imagga analyse, score opslaan |
 | `clock-service` | Deadlines, reminders, winnaar bepalen na deadline |
 | `mail-service` | Mails sturen via RabbitMQ berichten |
-| `read-service` | Dashboard/read endpoints voor overzichten |
 
 Daarnaast draaien:
 
@@ -125,14 +124,43 @@ Standaard staat `MAIL_MODE=ethereal`. In de logs van `mail-service` komt dan een
 
 ## RabbitMQ events
 
-De belangrijkste events:
+De meeste samenwerking tussen services loopt via RabbitMQ. Ik heb dit vooral gedaan zodat de clock/deadline flow niet afhankelijk is van live HTTP calls naar alle andere services.
 
-| Event/queue | Gebruik |
+De belangrijkste events/queues:
+
+| Event/queue | Van | Naar | Gebruik |
 | --- | --- |
-| `clock.target-created` | Clock-service start tracking van een target |
-| `target.deleted` | Register/score/clock-service ruimen data of tracking op |
-| `mail.reminders` | Mail-service verstuurt reminders |
-| `mail.target-results` | Mail-service verstuurt resultaten |
+| `clock.target-created` | `target-service` | `clock-service` | Clock-service start tracking van een nieuwe target |
+| `target.deleted` | `target-service` | `register-service`, `score-service`, `clock-service` | Andere services ruimen data/tracking op wanneer een target weg is |
+| `registration.created` | `register-service` | `clock-service` | Clock-service slaat een snapshot op van ingeschreven deelnemers |
+| `registration.deleted` | `register-service` | `clock-service` | Clock-service haalt een participant uit zijn snapshot |
+| `submission.created` | `score-service` | `clock-service` | Clock-service slaat een snapshot op van ingestuurde scores |
+| `submission.deleted` | `score-service` | `clock-service` | Clock-service haalt een submission uit zijn snapshot |
+| `competition.expired` | `clock-service` | `register-service` | Register-service sluit registraties voor de verlopen target |
+| `winner.determined` | `clock-service` | `target-service` | Target-service zet de target op gesloten en slaat winnaar/score op |
+| `mail.reminders` | `clock-service` | `mail-service` | Mail-service verstuurt reminders |
+| `mail.target-results` | `clock-service` | `mail-service` | Mail-service verstuurt resultaten |
+
+De `clock-service` heeft daarom ook een eigen kleine database met snapshots:
+
+| Snapshot | Waarom |
+| --- | --- |
+| `TrackedCompetition` | Welke targets lopen, deadline, owner en status |
+| `ClockRegistration` | Welke deelnemers zijn ingeschreven |
+| `ClockSubmission` | Welke deelnemers al iets hebben ingestuurd en met welke score |
+
+Hierdoor hoeft de `clock-service` bij een deadline niet eerst live registraties, submissions en users op te vragen via internal HTTP. Als een service tijdelijk offline is, kan RabbitMQ het bericht later alsnog afleveren.
+
+## Internal HTTP
+
+Er is nog maar een kleine internal/demo API over via de gateway:
+
+| Route | Gebruik |
+| --- | --- |
+| `POST /api/internal/clock/run` | Handmatig de clock cycle starten voor Postman/demo |
+| `POST /api/internal/clock/targets/start` | Handmatige fallback om tracking voor een target te starten |
+
+Deze routes zijn vooral handig voor het assessment. De normale flow gebruikt `target-created` via RabbitMQ.
 
 ## Security
 

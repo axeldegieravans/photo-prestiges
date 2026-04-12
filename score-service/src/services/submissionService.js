@@ -13,6 +13,10 @@ const {
   fetchTargetById,
   validateSubmissionRules
 } = require('./submissionValidationService');
+const {
+  publishSubmissionCreated,
+  publishSubmissionDeleted
+} = require('./rabbitmqPublisher');
 
 const PARTICIPANT = 'PARTICIPANT';
 const OWNER = 'OWNER';
@@ -76,6 +80,18 @@ const createSubmission = async ({ data, user, authHeader, file }) => {
       analysisProvider: analysis.provider,
       analysisSummary: analysis.summary
     });
+
+    try {
+      await publishSubmissionCreated({
+        submission,
+        user
+      });
+    } catch (error) {
+      console.warn(
+        '[score-service] Submission created, but failed to publish submission-created event:',
+        error.message
+      );
+    }
 
     return submission;
   } catch (err) {
@@ -231,6 +247,18 @@ const deleteSubmission = async ({ submissionId, user }) => {
 
   await submission.deleteOne();
   await deleteFileIfExists(filePath);
+
+  try {
+    await publishSubmissionDeleted({
+      submission,
+      user
+    });
+  } catch (error) {
+    console.warn(
+      '[score-service] Submission deleted, but failed to publish submission-deleted event:',
+      error.message
+    );
+  }
 
   return {
     message: 'Submission deleted successfully'

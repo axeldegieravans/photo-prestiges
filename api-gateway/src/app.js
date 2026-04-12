@@ -105,21 +105,6 @@ app.use(
 );
 
 app.use(
-  '/api/read',
-  createProxyMiddleware({
-    target: process.env.READ_SERVICE_URL,
-    changeOrigin: true,
-    proxyTimeout: 5000,
-    pathRewrite: (path) => `/api/read${path}`,
-    on: {
-      error: (err, req, res) => {
-        sendProxyError('Read', res, err);
-      }
-    }
-  })
-);
-
-app.use(
   '/api/internal/clock',
   createProxyMiddleware({
     target: process.env.CLOCK_SERVICE_URL,

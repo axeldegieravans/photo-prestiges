@@ -1,5 +1,8 @@
 const amqp = require('amqplib');
-const { deleteRegistrationsForTargetInternal } = require('./registrationService');
+const {
+  closeRegistrationsForTargetInternal,
+  deleteRegistrationsForTargetInternal
+} = require('./registrationService');
 
 let connection = null;
 let channel = null;
@@ -20,8 +23,16 @@ const getTargetEventsExchangeName = () => {
   return process.env.TARGET_EVENTS_EXCHANGE || 'target.events';
 };
 
+const getClockEventsExchangeName = () => {
+  return process.env.CLOCK_EVENTS_EXCHANGE || 'clock.events';
+};
+
 const getTargetDeletedQueueName = () => {
   return process.env.REGISTER_TARGET_DELETED_QUEUE || 'register.target-deleted';
+};
+
+const getCompetitionExpiredQueueName = () => {
+  return process.env.REGISTER_COMPETITION_EXPIRED_QUEUE || 'register.competition-expired';
 };
 
 const resetConnectionState = () => {
@@ -29,7 +40,48 @@ const resetConnectionState = () => {
   channel = null;
 };
 
-const startTargetDeletedConsumer = async () => {
+const startConsumer = async ({
+  queueName,
+  exchangeName,
+  routingKey,
+  processMessage,
+  successLabel,
+  failureLabel
+}) => {
+  await channel.assertQueue(queueName, {
+    durable: true
+  });
+
+  await channel.bindQueue(queueName, exchangeName, routingKey);
+
+  await channel.consume(
+    queueName,
+    async (message) => {
+      if (!message) {
+        return;
+      }
+
+      try {
+        const payload = JSON.parse(message.content.toString());
+
+        await processMessage(payload);
+
+        channel.ack(message);
+
+        console.log(`[register-service] ${successLabel} ${payload.targetId}`);
+      } catch (error) {
+        console.error(`[register-service] ${failureLabel}:`, error.message);
+
+        channel.nack(message, false, false);
+      }
+    },
+    {
+      noAck: false
+    }
+  );
+};
+
+const startRegistrationConsumers = async () => {
   if (channel) {
     return channel;
   }
@@ -51,58 +103,49 @@ const startTargetDeletedConsumer = async () => {
     durable: true
   });
 
-  await channel.assertQueue(getTargetDeletedQueueName(), {
+  await channel.assertExchange(getClockEventsExchangeName(), 'topic', {
     durable: true
   });
 
-  await channel.bindQueue(
-    getTargetDeletedQueueName(),
-    getTargetEventsExchangeName(),
-    'target.deleted'
-  );
-
   await channel.prefetch(1);
 
-  await channel.consume(
-    getTargetDeletedQueueName(),
-    async (message) => {
-      if (!message) {
-        return;
-      }
+  await startConsumer({
+    queueName: getTargetDeletedQueueName(),
+    exchangeName: getTargetEventsExchangeName(),
+    routingKey: 'target.deleted',
+    processMessage: async (payload) => {
+      const result = await deleteRegistrationsForTargetInternal({
+        targetId: payload.targetId
+      });
 
-      try {
-        const payload = JSON.parse(message.content.toString());
-
-        const result = await deleteRegistrationsForTargetInternal({
-          targetId: payload.targetId
-        });
-
-        channel.ack(message);
-
-        console.log(
-          `[register-service] target-deleted event processed for target ${payload.targetId}; deleted registrations=${result.deletedRegistrations}`
-        );
-      } catch (error) {
-        console.error(
-          '[register-service] failed to process target-deleted event:',
-          error.message
-        );
-
-        channel.nack(message, false, false);
-      }
+      console.log(
+        `[register-service] deleted registrations=${result.deletedRegistrations}`
+      );
     },
-    {
-      noAck: false
-    }
-  );
+    successLabel: 'target-deleted event processed for target',
+    failureLabel: 'failed to process target-deleted event'
+  });
+
+  await startConsumer({
+    queueName: getCompetitionExpiredQueueName(),
+    exchangeName: getClockEventsExchangeName(),
+    routingKey: 'competition.expired',
+    processMessage: (payload) =>
+      closeRegistrationsForTargetInternal({
+        targetId: payload.targetId,
+        closedAt: payload.closedAt
+      }),
+    successLabel: 'competition-expired event processed for target',
+    failureLabel: 'failed to process competition-expired event'
+  });
 
   console.log(
-    `[register-service] RabbitMQ consumer started for queue: ${getTargetDeletedQueueName()}`
+    `[register-service] RabbitMQ consumers started for queues: ${getTargetDeletedQueueName()}, ${getCompetitionExpiredQueueName()}`
   );
 
   return channel;
 };
 
 module.exports = {
-  startTargetDeletedConsumer
+  startRegistrationConsumers
 };

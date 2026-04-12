@@ -4,6 +4,7 @@ const generateToken = (user) => {
   return jwt.sign(
     {
       userId: user._id,
+      name: user.name,
       email: user.email,
       role: user.role
     },

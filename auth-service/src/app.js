@@ -1,6 +1,5 @@
 const express = require('express');
 const authRoutes = require('./routes/authRoutes');
-const internalUserRoutes = require('./routes/internalUserRoutes');
 const swaggerUi = require('swagger-ui-express');
 const YAML = require('yamljs');
 const path = require('path');
@@ -30,7 +29,6 @@ app.get('/health', (req, res) => {
 app.get('/metrics', metricsHandler);
 
 app.use('/auth', authRoutes);
-app.use('/api/internal', internalUserRoutes);
 
 app.use((req, res) => {
   res.status(404).json({

@@ -1,18 +1,13 @@
 const {
   publishTargetResultsMessage,
-  publishReminderMessage
+  publishReminderMessage,
+  publishCompetitionExpiredEvent,
+  publishWinnerDeterminedEvent
 } = require('./rabbitmqPublisher');
 const TrackedCompetition = require('../models/TrackedCompetition');
+const ClockRegistration = require('../models/ClockRegistration');
+const ClockSubmission = require('../models/ClockSubmission');
 const {
-  fetchTargetById,
-  fetchSubmissionsByTargetInternal,
-  fetchRegistrationsByTargetInternal,
-  closeRegistrationsForTargetInternal,
-  fetchUsersBatchInternal,
-  finalizeTargetInternal
-} = require('./clockApiService');
-const {
-  uniqueStrings,
   getWinner,
   buildTargetResultsPayload,
   buildReminderPayload
@@ -58,6 +53,51 @@ const isNotFoundError = (error) => {
   return error?.statusCode === 404 || error?.message === 'Target not found';
 };
 
+const buildTargetSnapshot = (competition) => {
+  return {
+    _id: competition.targetId,
+    ownerId: competition.ownerId,
+    title: competition.title || `Target ${competition.targetId}`,
+    city: competition.city || null,
+    createdAt: competition.startedAt,
+    startedAt: competition.startedAt,
+    deadline: competition.deadline
+  };
+};
+
+const buildUserSnapshots = ({ competition, registrations, submissions }) => {
+  const users = new Map();
+
+  users.set(String(competition.ownerId), {
+    userId: String(competition.ownerId),
+    name: competition.ownerName || null,
+    email: competition.ownerEmail || null,
+    role: 'OWNER'
+  });
+
+  registrations.forEach((registration) => {
+    users.set(String(registration.participantId), {
+      userId: String(registration.participantId),
+      name: registration.participantName || null,
+      email: registration.participantEmail || null,
+      role: 'PARTICIPANT'
+    });
+  });
+
+  submissions.forEach((submission) => {
+    if (!users.has(String(submission.participantId))) {
+      users.set(String(submission.participantId), {
+        userId: String(submission.participantId),
+        name: submission.participantName || null,
+        email: submission.participantEmail || null,
+        role: 'PARTICIPANT'
+      });
+    }
+  });
+
+  return [...users.values()];
+};
+
 const markCompetitionDeleted = async ({ targetId, deletedAt }) => {
   if (!targetId) {
     const error = new Error('targetId is required');
@@ -90,6 +130,11 @@ const markCompetitionDeleted = async ({ targetId, deletedAt }) => {
     }
   );
 
+  await Promise.all([
+    ClockRegistration.deleteMany({ targetId: String(targetId) }),
+    ClockSubmission.deleteMany({ targetId: String(targetId) })
+  ]);
+
   return competition;
 };
 
@@ -97,6 +142,10 @@ const startCompetitionForTarget = async ({ data }) => {
   const {
     targetId,
     ownerId,
+    ownerEmail,
+    ownerName,
+    title,
+    city,
     startedAt,
     deadline
   } = data || {};
@@ -139,6 +188,10 @@ const startCompetitionForTarget = async ({ data }) => {
   const trackedCompetition = await TrackedCompetition.create({
     targetId: String(targetId),
     ownerId: String(ownerId),
+    ownerEmail: ownerEmail || null,
+    ownerName: ownerName || null,
+    title: title || null,
+    city: city || null,
     startedAt: parsedStartedAt,
     deadline: parsedDeadline,
     status: 'ACTIVE',
@@ -149,6 +202,135 @@ const startCompetitionForTarget = async ({ data }) => {
   });
 
   return trackedCompetition;
+};
+
+const upsertRegistrationSnapshot = async ({ data }) => {
+  const { targetId, participantId, participantEmail, participantName } =
+    data || {};
+
+  if (!targetId || !participantId) {
+    const error = new Error('targetId and participantId are required');
+    error.statusCode = 400;
+    throw error;
+  }
+
+  const registeredAt = data.registeredAt ? new Date(data.registeredAt) : new Date();
+
+  if (Number.isNaN(registeredAt.getTime())) {
+    const error = new Error('registeredAt must be a valid date');
+    error.statusCode = 400;
+    throw error;
+  }
+
+  return ClockRegistration.findOneAndUpdate(
+    {
+      targetId: String(targetId),
+      participantId: String(participantId)
+    },
+    {
+      $set: {
+        participantEmail: participantEmail || null,
+        participantName: participantName || null,
+        registeredAt
+      }
+    },
+    {
+      upsert: true,
+      new: true,
+      setDefaultsOnInsert: true
+    }
+  );
+};
+
+const deleteRegistrationSnapshot = async ({ data }) => {
+  const { targetId, participantId } = data || {};
+
+  if (!targetId || !participantId) {
+    const error = new Error('targetId and participantId are required');
+    error.statusCode = 400;
+    throw error;
+  }
+
+  return ClockRegistration.deleteOne({
+    targetId: String(targetId),
+    participantId: String(participantId)
+  });
+};
+
+const upsertSubmissionSnapshot = async ({ data }) => {
+  const {
+    submissionId,
+    targetId,
+    participantId,
+    participantEmail,
+    participantName,
+    similarityScore
+  } = data || {};
+
+  if (!submissionId || !targetId || !participantId) {
+    const error = new Error('submissionId, targetId and participantId are required');
+    error.statusCode = 400;
+    throw error;
+  }
+
+  const submittedAt = data.submittedAt ? new Date(data.submittedAt) : new Date();
+  const normalizedSimilarityScore = Number(similarityScore);
+
+  if (Number.isNaN(submittedAt.getTime())) {
+    const error = new Error('submittedAt must be a valid date');
+    error.statusCode = 400;
+    throw error;
+  }
+
+  if (
+    Number.isNaN(normalizedSimilarityScore) ||
+    normalizedSimilarityScore < 0 ||
+    normalizedSimilarityScore > 100
+  ) {
+    const error = new Error('similarityScore must be a number between 0 and 100');
+    error.statusCode = 400;
+    throw error;
+  }
+
+  return ClockSubmission.findOneAndUpdate(
+    {
+      targetId: String(targetId),
+      participantId: String(participantId)
+    },
+    {
+      $set: {
+        submissionId: String(submissionId),
+        participantEmail: participantEmail || null,
+        participantName: participantName || null,
+        similarityScore: normalizedSimilarityScore,
+        submittedAt
+      }
+    },
+    {
+      upsert: true,
+      new: true,
+      setDefaultsOnInsert: true
+    }
+  );
+};
+
+const deleteSubmissionSnapshot = async ({ data }) => {
+  const { submissionId, targetId, participantId } = data || {};
+
+  const query = submissionId
+    ? { submissionId: String(submissionId) }
+    : {
+        targetId: String(targetId),
+        participantId: String(participantId)
+      };
+
+  if (!query.submissionId && (!targetId || !participantId)) {
+    const error = new Error('submissionId or targetId with participantId is required');
+    error.statusCode = 400;
+    throw error;
+  }
+
+  return ClockSubmission.deleteOne(query);
 };
 
 let isRunning = false;
@@ -206,23 +388,31 @@ const runDeadlineCycle = async ({ now, source = 'scheduler' } = {}) => {
 
     for (const competition of expiredCompetitions) {
       try {
-        const target = await fetchTargetById(competition.targetId);
+        const target = buildTargetSnapshot(competition);
 
         if (!competition.registrationsClosedAt) {
-          await closeRegistrationsForTargetInternal({
+          await publishCompetitionExpiredEvent({
             targetId: competition.targetId,
             closedAt: runAt.toISOString()
           });
         }
 
-        const submissions = await fetchSubmissionsByTargetInternal(
-          competition.targetId
-        );
+        const [registrations, submissions] = await Promise.all([
+          ClockRegistration.find({ targetId: competition.targetId })
+            .sort({ registeredAt: 1 })
+            .lean(),
+          ClockSubmission.find({ targetId: competition.targetId })
+            .sort({ similarityScore: -1, submittedAt: 1 })
+            .lean()
+        ]);
         const winner = getWinner(submissions, target);
 
-        await finalizeTargetInternal({
+        await publishWinnerDeterminedEvent({
           targetId: competition.targetId,
-          winner,
+          winnerParticipantId: winner ? winner.participantId : null,
+          winnerSubmissionId: winner ? winner.submissionId || winner._id : null,
+          winningScore: winner ? winner.finalScore ?? winner.similarityScore : null,
+          winningSubmittedAt: winner ? winner.submittedAt : null,
           closedAt: runAt.toISOString()
         });
 
@@ -230,17 +420,11 @@ const runDeadlineCycle = async ({ now, source = 'scheduler' } = {}) => {
         let mailMessage = null;
 
         try {
-          const registrations = await fetchRegistrationsByTargetInternal(
-            competition.targetId
-          );
-
-          const relatedUserIds = uniqueStrings([
-            target.ownerId,
-            ...registrations.map((registration) => registration.participantId)
-          ]);
-
-          const usersResult = await fetchUsersBatchInternal(relatedUserIds);
-          const users = Array.isArray(usersResult.items) ? usersResult.items : [];
+          const users = buildUserSnapshots({
+            competition,
+            registrations,
+            submissions
+          });
 
           const payload = buildTargetResultsPayload({
             target,
@@ -311,21 +495,20 @@ const runDeadlineCycle = async ({ now, source = 'scheduler' } = {}) => {
 
     for (const competition of reminderCompetitions) {
       try {
-        const target = await fetchTargetById(competition.targetId);
-
-        const registrations = await fetchRegistrationsByTargetInternal(
-          competition.targetId
-        );
-        const submissions = await fetchSubmissionsByTargetInternal(
-          competition.targetId
-        );
-
-        const relatedUserIds = uniqueStrings(
-          registrations.map((registration) => registration.participantId)
-        );
-
-        const usersResult = await fetchUsersBatchInternal(relatedUserIds);
-        const users = Array.isArray(usersResult.items) ? usersResult.items : [];
+        const target = buildTargetSnapshot(competition);
+        const [registrations, submissions] = await Promise.all([
+          ClockRegistration.find({ targetId: competition.targetId })
+            .sort({ registeredAt: 1 })
+            .lean(),
+          ClockSubmission.find({ targetId: competition.targetId })
+            .sort({ submittedAt: 1 })
+            .lean()
+        ]);
+        const users = buildUserSnapshots({
+          competition,
+          registrations,
+          submissions
+        });
 
         const payload = buildReminderPayload({
           target,
@@ -446,6 +629,10 @@ const startScheduler = () => {
 module.exports = {
   markCompetitionDeleted,
   startCompetitionForTarget,
+  upsertRegistrationSnapshot,
+  deleteRegistrationSnapshot,
+  upsertSubmissionSnapshot,
+  deleteSubmissionSnapshot,
   runDeadlineCycle,
   startScheduler
 };

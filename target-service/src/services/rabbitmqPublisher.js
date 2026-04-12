@@ -27,6 +27,10 @@ const buildTargetCreatedPayload = (target) => {
   return {
     targetId: String(target._id),
     ownerId: String(target.ownerId),
+    ownerEmail: target.ownerEmail || null,
+    ownerName: target.ownerName || null,
+    title: target.title,
+    city: target.city || null,
     startedAt: target.createdAt,
     deadline: target.deadline
   };

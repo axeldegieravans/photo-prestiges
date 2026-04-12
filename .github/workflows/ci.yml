@@ -33,7 +33,6 @@ jobs:
           npm ci --prefix score-service
           npm ci --prefix clock-service
           npm ci --prefix mail-service
-          npm ci --prefix read-service
 
       - name: Run lint
         run: npm run lint

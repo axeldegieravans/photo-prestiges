@@ -11,6 +11,10 @@ const getRemindersQueueName = () => {
   return process.env.MAIL_REMINDERS_QUEUE || 'mail.reminders';
 };
 
+const getClockEventsExchangeName = () => {
+  return process.env.CLOCK_EVENTS_EXCHANGE || 'clock.events';
+};
+
 const getRabbitUrl = () => {
   const url = process.env.RABBITMQ_URL;
 
@@ -54,8 +58,12 @@ const connectRabbitMq = async () => {
     durable: true
   });
 
+  await channel.assertExchange(getClockEventsExchangeName(), 'topic', {
+    durable: true
+  });
+
   console.log(
-    `[clock-service] RabbitMQ connected, queues ready: ${getTargetResultsQueueName()}, ${getRemindersQueueName()}`
+    `[clock-service] RabbitMQ connected, queues ready: ${getTargetResultsQueueName()}, ${getRemindersQueueName()}, exchange ready: ${getClockEventsExchangeName()}`
   );
 
   return channel;
@@ -91,6 +99,38 @@ const publishMessage = async ({ queueName, payload, failureMessage }) => {
   };
 };
 
+const publishEvent = async ({ routingKey, payload, failureMessage }) => {
+  if (!payload || typeof payload !== 'object') {
+    const error = new Error('RabbitMQ payload must be an object');
+    error.statusCode = 400;
+    throw error;
+  }
+
+  const activeChannel = await connectRabbitMq();
+
+  const published = activeChannel.publish(
+    getClockEventsExchangeName(),
+    routingKey,
+    Buffer.from(JSON.stringify(payload)),
+    {
+      persistent: true,
+      contentType: 'application/json'
+    }
+  );
+
+  if (!published) {
+    const error = new Error(failureMessage);
+    error.statusCode = 503;
+    throw error;
+  }
+
+  return {
+    queued: true,
+    exchange: getClockEventsExchangeName(),
+    routingKey
+  };
+};
+
 const publishTargetResultsMessage = async (payload) => {
   return publishMessage({
     queueName: getTargetResultsQueueName(),
@@ -107,8 +147,32 @@ const publishReminderMessage = async (payload) => {
   });
 };
 
+const publishCompetitionExpiredEvent = async (payload) => {
+  return publishEvent({
+    routingKey: 'competition.expired',
+    payload: {
+      eventType: 'competition.expired',
+      ...payload
+    },
+    failureMessage: 'Failed to publish competition-expired event'
+  });
+};
+
+const publishWinnerDeterminedEvent = async (payload) => {
+  return publishEvent({
+    routingKey: 'winner.determined',
+    payload: {
+      eventType: 'winner.determined',
+      ...payload
+    },
+    failureMessage: 'Failed to publish winner-determined event'
+  });
+};
+
 module.exports = {
   connectRabbitMq,
   publishTargetResultsMessage,
-  publishReminderMessage
+  publishReminderMessage,
+  publishCompetitionExpiredEvent,
+  publishWinnerDeterminedEvent
 };

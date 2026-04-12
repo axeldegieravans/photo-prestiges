@@ -85,6 +85,8 @@ const createTarget = async ({ data, user, file }) => {
       imageUrl: buildTargetImageUrl(file.filename),
       imageFilename: file.filename,
       ownerId: user.userId,
+      ownerEmail: user.email || null,
+      ownerName: user.name || null,
       deadline: parsedDeadline,
       status: 'OPEN'
     });

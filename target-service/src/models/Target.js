@@ -45,6 +45,16 @@ const targetSchema = new mongoose.Schema(
       required: true,
       trim: true
     },
+    ownerEmail: {
+      type: String,
+      default: null,
+      trim: true
+    },
+    ownerName: {
+      type: String,
+      default: null,
+      trim: true
+    },
     deadline: {
       type: Date,
       required: true

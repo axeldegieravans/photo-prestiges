@@ -588,25 +588,6 @@ document.querySelector('#mySubmissionButton').addEventListener('click', async (e
   }
 });
 
-document.querySelector('#ownerDashboardButton').addEventListener('click', async (event) => {
-  const button = event.currentTarget;
-  setBusy(button, true);
-
-  try {
-    const result = await requestJson('/api/read/owners/me/dashboard', {
-      headers: authHeaders()
-    });
-
-    showResult(result, 'Owner dashboard loaded.');
-  } catch (error) {
-    setMessage(getErrorMessage(error), 'error');
-    setResultCard(error.payload || error.message);
-    setOutput(error.payload || error.message);
-  } finally {
-    setBusy(button, false);
-  }
-});
-
 document.querySelector('#runClockButton').addEventListener('click', async (event) => {
   const button = event.currentTarget;
   setBusy(button, true);

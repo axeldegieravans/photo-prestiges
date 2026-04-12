@@ -80,19 +80,6 @@ services:
       register-service:
         condition: service_started
 
-  read-service:
-    build: ./read-service
-    restart: unless-stopped
-    env_file:
-      - ./read-service/.env
-    depends_on:
-      target-service:
-        condition: service_started
-      register-service:
-        condition: service_started
-      score-service:
-        condition: service_started
-
   clock-service:
     build: ./clock-service
     restart: unless-stopped
@@ -136,8 +123,6 @@ services:
       target-service:
         condition: service_started
       score-service:
-        condition: service_started
-      read-service:
         condition: service_started
       clock-service:
         condition: service_started

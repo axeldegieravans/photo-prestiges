@@ -1,5 +1,4 @@
 const bcrypt = require('bcryptjs');
-const mongoose = require('mongoose');
 const User = require('../models/User');
 const generateToken = require('../utils/generateToken');
 const { createHttpError } = require('../utils/httpError');
@@ -85,70 +84,8 @@ const getCurrentUser = async (userId) => {
   return user;
 };
 
-const getUsersBatch = async (userIds) => {
-  if (!Array.isArray(userIds)) {
-    throw createHttpError(400, 'userIds must be an array');
-  }
-
-  const normalizedUserIds = [
-    ...new Set(
-      userIds
-        .map((userId) => String(userId).trim())
-        .filter(Boolean)
-    )
-  ];
-
-  if (normalizedUserIds.length === 0) {
-    return {
-      items: [],
-      missingUserIds: []
-    };
-  }
-
-  const validObjectIds = normalizedUserIds.filter((userId) =>
-    mongoose.Types.ObjectId.isValid(userId)
-  );
-
-  if (validObjectIds.length === 0) {
-    return {
-      items: [],
-      missingUserIds: normalizedUserIds
-    };
-  }
-
-  const users = await User.find({
-    _id: { $in: validObjectIds }
-  }).select('_id name email role');
-
-  const userMap = new Map(
-    users.map((user) => [
-      String(user._id),
-      {
-        userId: String(user._id),
-        name: user.name,
-        email: user.email,
-        role: user.role
-      }
-    ])
-  );
-
-  const items = normalizedUserIds
-    .map((userId) => userMap.get(userId))
-    .filter(Boolean);
-
-  const missingUserIds = normalizedUserIds.filter(
-    (userId) => !userMap.has(userId)
-  );
-
-  return {
-    items,
-    missingUserIds
-  };
-};
-
 module.exports = {
   registerUser,
   loginUser,
-  getCurrentUser,
-  getUsersBatch
+  getCurrentUser
 };

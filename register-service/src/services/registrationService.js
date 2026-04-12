@@ -9,6 +9,10 @@ const {
   validateTargetForRegistration
 } = require('./registrationValidationService');
 const { normalizePagination } = require('../utils/pagination');
+const {
+  publishRegistrationCreated,
+  publishRegistrationDeleted
+} = require('./rabbitmqPublisher');
 
 const createRegistration = async ({ targetId, user }) => {
   assertParticipant(user);
@@ -55,6 +59,18 @@ const createRegistration = async ({ targetId, user }) => {
       targetId,
       participantId
     });
+
+    try {
+      await publishRegistrationCreated({
+        registration,
+        user
+      });
+    } catch (error) {
+      console.warn(
+        '[register-service] Registration created, but failed to publish registration-created event:',
+        error.message
+      );
+    }
 
     return registration;
   } catch (err) {
@@ -182,6 +198,18 @@ const deleteRegistration = async ({ registrationId, user }) => {
   }
 
   await registration.deleteOne();
+
+  try {
+    await publishRegistrationDeleted({
+      registration,
+      user
+    });
+  } catch (error) {
+    console.warn(
+      '[register-service] Registration deleted, but failed to publish registration-deleted event:',
+      error.message
+    );
+  }
 
   return {
     message: 'Registration deleted successfully'
