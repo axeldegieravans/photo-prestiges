@@ -292,45 +292,11 @@ const deleteSubmissionsForTargetInternal = async ({ targetId }) => {
   };
 };
 
-const getSubmissionsByTargetInternal = async ({ targetId, page, limit }) => {
-  if (!targetId) {
-    const error = new Error('targetId is required');
-    error.statusCode = 400;
-    throw error;
-  }
-
-  const {
-    skip,
-    page: normalizedPage,
-    limit: normalizedLimit
-  } = normalizePagination(page, limit);
-
-  const [submissions, total] = await Promise.all([
-    Submission.find({ targetId })
-      .sort({ similarityScore: -1, submittedAt: 1 })
-      .skip(skip)
-      .limit(normalizedLimit),
-    Submission.countDocuments({ targetId })
-  ]);
-
-  return {
-    targetId,
-    items: submissions,
-    pagination: {
-      page: normalizedPage,
-      limit: normalizedLimit,
-      total,
-      pages: Math.ceil(total / normalizedLimit) || 1
-    }
-  };
-};
-
 module.exports = {
   createSubmission,
   getMySubmissions,
   getMySubmissionForTarget,
   getSubmissionsByTarget,
-  getSubmissionsByTargetInternal,
   deleteSubmission,
   deleteSubmissionsForTargetInternal
 };

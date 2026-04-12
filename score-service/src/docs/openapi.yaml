@@ -112,18 +112,3 @@ paths:
           description: Unauthorized
         '404':
           description: Submission not found
-
-  /api/internal/submissions/target/{targetId}:
-    get:
-      summary: Internal get submissions by target
-      parameters:
-        - in: path
-          name: targetId
-          required: true
-          schema:
-            type: string
-      responses:
-        '200':
-          description: Submissions returned
-        '401':
-          description: Unauthorized

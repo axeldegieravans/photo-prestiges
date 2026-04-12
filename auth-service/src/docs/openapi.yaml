@@ -72,23 +72,3 @@ paths:
           description: Current user returned
         '401':
           description: Unauthorized
-
-  /api/internal/users/batch:
-    post:
-      summary: Get users by ids
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                userIds:
-                  type: array
-                  items:
-                    type: string
-      responses:
-        '200':
-          description: Users returned
-        '401':
-          description: Unauthorized
