@@ -109,33 +109,3 @@ paths:
           description: Unauthorized
         '403':
           description: Forbidden
-
-  /api/internal/registrations/target/{targetId}:
-    get:
-      summary: Internal get registrations by target
-      parameters:
-        - in: path
-          name: targetId
-          required: true
-          schema:
-            type: string
-      responses:
-        '200':
-          description: Registrations returned
-        '401':
-          description: Unauthorized
-
-  /api/internal/registrations/target/{targetId}/close:
-    patch:
-      summary: Internal close registrations for target
-      parameters:
-        - in: path
-          name: targetId
-          required: true
-          schema:
-            type: string
-      responses:
-        '200':
-          description: Registrations closed
-        '401':
-          description: Unauthorized

@@ -155,27 +155,6 @@ const getRegistrationsByTarget = async ({ targetId, user, page, limit }) => {
   };
 };
 
-const getRegistrationsByTargetInternal = async ({ targetId }) => {
-  if (!targetId) {
-    const error = new Error('targetId is required');
-    error.statusCode = 400;
-    throw error;
-  }
-
-  const [registrations, targetState] = await Promise.all([
-    Registration.find({ targetId }).sort({ createdAt: 1 }),
-    TargetRegistrationState.findOne({ targetId })
-  ]);
-
-  return {
-    targetId,
-    registrationsOpen: targetState ? targetState.registrationsOpen : true,
-    closedAt: targetState ? targetState.closedAt : null,
-    count: registrations.length,
-    items: registrations
-  };
-};
-
 const deleteRegistration = async ({ registrationId, user }) => {
   assertParticipant(user);
 
@@ -302,7 +281,6 @@ module.exports = {
   createRegistration,
   getMyRegistrations,
   getRegistrationsByTarget,
-  getRegistrationsByTargetInternal,
   deleteRegistration,
   closeRegistrationsForTarget,
   closeRegistrationsForTargetInternal,

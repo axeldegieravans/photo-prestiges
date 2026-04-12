@@ -139,33 +139,3 @@ paths:
           description: Forbidden
         '404':
           description: Target not found
-
-  /api/internal/targets/{targetId}/finalize:
-    patch:
-      summary: Internal finalize target
-      parameters:
-        - in: path
-          name: targetId
-          required: true
-          schema:
-            type: string
-      responses:
-        '200':
-          description: Target finalized
-        '401':
-          description: Unauthorized
-
-  /api/internal/targets/{targetId}/reminder-sent:
-    patch:
-      summary: Internal mark reminder sent
-      parameters:
-        - in: path
-          name: targetId
-          required: true
-          schema:
-            type: string
-      responses:
-        '200':
-          description: Reminder marked
-        '401':
-          description: Unauthorized

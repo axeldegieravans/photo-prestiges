@@ -593,7 +593,7 @@ document.querySelector('#runClockButton').addEventListener('click', async (event
   setBusy(button, true);
 
   try {
-    const result = await requestJson('/api/clock/run', {
+    const result = await requestJson('/api/internal/clock/run', {
       method: 'POST',
       headers: {
         'x-internal-service-token': elements.internalToken.value

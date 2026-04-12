@@ -45,18 +45,6 @@ const getRegistrationsByTarget = async (req, res, next) => {
   }
 };
 
-const getRegistrationsByTargetInternal = async (req, res, next) => {
-  try {
-    const result = await registrationService.getRegistrationsByTargetInternal({
-      targetId: req.params.targetId
-    });
-
-    res.status(200).json(result);
-  } catch (error) {
-    next(error);
-  }
-};
-
 const deleteRegistration = async (req, res, next) => {
   try {
     const result = await registrationService.deleteRegistration({
@@ -90,7 +78,6 @@ module.exports = {
   createRegistration,
   getMyRegistrations,
   getRegistrationsByTarget,
-  getRegistrationsByTargetInternal,
   deleteRegistration,
   closeRegistrationsForTarget
 };
