@@ -6,7 +6,12 @@ const { createProxyMiddleware } = require('http-proxy-middleware');
 const swaggerUi = require('swagger-ui-express');
 
 const healthRoutes = require('./routes/healthRoutes');
+const { getSwaggerUiOptions } = require('./utils/docsConfig');
 const { notFound, errorHandler } = require('./middleware/errorMiddleware');
+const {
+  metricsMiddleware,
+  metricsHandler
+} = require('./middleware/metricsMiddleware');
 
 const app = express();
 const uploadsDir = process.env.UPLOADS_DIR || path.join(process.cwd(), 'uploads');
@@ -25,6 +30,7 @@ const sendProxyError = (serviceName, res, err) => {
 
 app.use(cors());
 app.use(morgan('dev'));
+app.use(metricsMiddleware);
 app.use('/docs/openapi', express.static(path.join(__dirname, 'docs')));
 
 app.use(
@@ -36,6 +42,7 @@ app.use(
 );
 
 app.use('/health', healthRoutes);
+app.get('/metrics', metricsHandler);
 
 app.use(
   '/auth',
@@ -98,21 +105,6 @@ app.use(
 );
 
 app.use(
-  '/api/read',
-  createProxyMiddleware({
-    target: process.env.READ_SERVICE_URL,
-    changeOrigin: true,
-    proxyTimeout: 5000,
-    pathRewrite: (path) => `/api/read${path}`,
-    on: {
-      error: (err, req, res) => {
-        sendProxyError('Read', res, err);
-      }
-    }
-  })
-);
-
-app.use(
   '/api/internal/clock',
   createProxyMiddleware({
     target: process.env.CLOCK_SERVICE_URL,
@@ -130,22 +122,7 @@ app.use(
 app.use(
   '/docs',
   swaggerUi.serve,
-  swaggerUi.setup(null, {
-    explorer: true,
-    customSiteTitle: 'Photo Prestiges API Docs',
-    swaggerOptions: {
-      urls: [
-        {
-          url: '/docs/openapi/public.openapi.yaml',
-          name: 'Gateway Public API'
-        },
-        {
-          url: '/docs/openapi/internal.openapi.yaml',
-          name: 'Internal Demo API'
-        }
-      ]
-    }
-  })
+  swaggerUi.setup(null, getSwaggerUiOptions())
 );
 
 app.use(notFound);

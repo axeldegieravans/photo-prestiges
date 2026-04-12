@@ -12,6 +12,26 @@ const trackedCompetitionSchema = new mongoose.Schema(
       type: String,
       required: true
     },
+    ownerEmail: {
+      type: String,
+      default: null,
+      trim: true
+    },
+    ownerName: {
+      type: String,
+      default: null,
+      trim: true
+    },
+    title: {
+      type: String,
+      default: null,
+      trim: true
+    },
+    city: {
+      type: String,
+      default: null,
+      trim: true
+    },
     startedAt: {
       type: Date,
       required: true

@@ -2,7 +2,7 @@ const TargetEventOutbox = require('../models/TargetEventOutbox');
 const {
   buildTargetCreatedPayload,
   publishTargetCreatedPayload
-} = require('./rabbitmqPublisher');
+} = require('./targetEventPublisher');
 
 let intervalId = null;
 let isDispatching = false;

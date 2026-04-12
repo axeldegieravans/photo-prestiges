@@ -1,38 +1,31 @@
 const mongoose = require('mongoose');
 const Target = require('../models/Target');
+const { createHttpError } = require('../utils/httpError');
 
 const OWNER = 'OWNER';
 const PARTICIPANT = 'PARTICIPANT';
 
 const assertOwner = (user) => {
   if (!user || user.role !== OWNER) {
-    const error = new Error('Only owners can perform this action');
-    error.statusCode = 403;
-    throw error;
+    throw createHttpError(403, 'Only owners can perform this action');
   }
 };
 
 const assertParticipant = (user) => {
   if (!user || user.role !== PARTICIPANT) {
-    const error = new Error('Only participants can perform this action');
-    error.statusCode = 403;
-    throw error;
+    throw createHttpError(403, 'Only participants can perform this action');
   }
 };
 
 const assertTargetOwnership = (target, user) => {
   if (String(target.ownerId) !== String(user.userId)) {
-    const error = new Error('You can only manage your own target');
-    error.statusCode = 403;
-    throw error;
+    throw createHttpError(403, 'You can only manage your own target');
   }
 };
 
 const validateTargetId = (targetId) => {
   if (!mongoose.Types.ObjectId.isValid(targetId)) {
-    const error = new Error('Invalid target id');
-    error.statusCode = 400;
-    throw error;
+    throw createHttpError(400, 'Invalid target id');
   }
 };
 
@@ -42,9 +35,7 @@ const getTargetOrThrow = async (targetId) => {
   const target = await Target.findById(targetId);
 
   if (!target) {
-    const error = new Error('Target not found');
-    error.statusCode = 404;
-    throw error;
+    throw createHttpError(404, 'Target not found');
   }
 
   return target;
@@ -57,9 +48,7 @@ const validateCoordinates = ({ latitude, longitude }) => {
       Number(latitude) < -90 ||
       Number(latitude) > 90
     ) {
-      const error = new Error('latitude must be a number between -90 and 90');
-      error.statusCode = 400;
-      throw error;
+      throw createHttpError(400, 'latitude must be a number between -90 and 90');
     }
   }
 
@@ -69,9 +58,7 @@ const validateCoordinates = ({ latitude, longitude }) => {
       Number(longitude) < -180 ||
       Number(longitude) > 180
     ) {
-      const error = new Error('longitude must be a number between -180 and 180');
-      error.statusCode = 400;
-      throw error;
+      throw createHttpError(400, 'longitude must be a number between -180 and 180');
     }
   }
 };
@@ -84,9 +71,7 @@ const validateTargetStatus = (status) => {
   const normalizedStatus = String(status).toUpperCase();
 
   if (!['OPEN', 'CLOSED'].includes(normalizedStatus)) {
-    const error = new Error('status must be OPEN or CLOSED');
-    error.statusCode = 400;
-    throw error;
+    throw createHttpError(400, 'status must be OPEN or CLOSED');
   }
 
   return normalizedStatus;

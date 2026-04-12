@@ -10,7 +10,6 @@ tags:
   - name: Targets
   - name: Registrations
   - name: Submissions
-  - name: Read
   - name: Assets
 components:
   securitySchemes:
@@ -382,57 +381,6 @@ paths:
       responses:
         '200':
           description: Submission deleted
-  /api/read/targets/active:
-    get:
-      tags: [Read]
-      summary: Read model for active targets
-      parameters:
-        - $ref: '#/components/parameters/Page'
-        - $ref: '#/components/parameters/Limit'
-        - in: query
-          name: city
-          schema:
-            type: string
-        - in: query
-          name: search
-          schema:
-            type: string
-      responses:
-        '200':
-          description: Active targets returned
-  /api/read/owners/me/dashboard:
-    get:
-      tags: [Read]
-      summary: Owner dashboard
-      security:
-        - bearerAuth: []
-      responses:
-        '200':
-          description: Dashboard returned
-  /api/read/owners/me/targets/{targetId}/overview:
-    get:
-      tags: [Read]
-      summary: Owner target overview
-      security:
-        - bearerAuth: []
-      parameters:
-        - in: path
-          name: targetId
-          required: true
-          schema:
-            type: string
-      responses:
-        '200':
-          description: Target overview returned
-  /api/read/participants/me/dashboard:
-    get:
-      tags: [Read]
-      summary: Participant dashboard
-      security:
-        - bearerAuth: []
-      responses:
-        '200':
-          description: Dashboard returned
   /uploads/{type}/{filename}:
     get:
       tags: [Assets]

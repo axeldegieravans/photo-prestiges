@@ -8,17 +8,11 @@ const {
   assertTargetOwner,
   validateTargetForRegistration
 } = require('./registrationValidationService');
-
-const normalizePagination = (page, limit) => {
-  const normalizedPage = Math.max(parseInt(page, 10) || 1, 1);
-  const normalizedLimit = Math.min(Math.max(parseInt(limit, 10) || 10, 1), 100);
-
-  return {
-    page: normalizedPage,
-    limit: normalizedLimit,
-    skip: (normalizedPage - 1) * normalizedLimit
-  };
-};
+const { normalizePagination } = require('../utils/pagination');
+const {
+  publishRegistrationCreated,
+  publishRegistrationDeleted
+} = require('./registrationEventPublisher');
 
 const createRegistration = async ({ targetId, user }) => {
   assertParticipant(user);
@@ -65,6 +59,18 @@ const createRegistration = async ({ targetId, user }) => {
       targetId,
       participantId
     });
+
+    try {
+      await publishRegistrationCreated({
+        registration,
+        user
+      });
+    } catch (error) {
+      console.warn(
+        '[register-service] Registration created, but failed to publish registration-created event:',
+        error.message
+      );
+    }
 
     return registration;
   } catch (err) {
@@ -192,6 +198,18 @@ const deleteRegistration = async ({ registrationId, user }) => {
   }
 
   await registration.deleteOne();
+
+  try {
+    await publishRegistrationDeleted({
+      registration,
+      user
+    });
+  } catch (error) {
+    console.warn(
+      '[register-service] Registration deleted, but failed to publish registration-deleted event:',
+      error.message
+    );
+  }
 
   return {
     message: 'Registration deleted successfully'

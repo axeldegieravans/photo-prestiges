@@ -1,13 +1,17 @@
 const express = require('express');
 const authRoutes = require('./routes/authRoutes');
-const internalUserRoutes = require('./routes/internalUserRoutes');
 const swaggerUi = require('swagger-ui-express');
 const YAML = require('yamljs');
 const path = require('path');
+const {
+  metricsMiddleware,
+  metricsHandler
+} = require('./middleware/metricsMiddleware');
 
 const app = express();
 
 app.use(express.json());
+app.use(metricsMiddleware);
 
 const swaggerDocument = YAML.load(
   path.join(__dirname, 'docs', 'openapi.yaml')
@@ -22,8 +26,9 @@ app.get('/health', (req, res) => {
   });
 });
 
+app.get('/metrics', metricsHandler);
+
 app.use('/auth', authRoutes);
-app.use('/api/internal', internalUserRoutes);
 
 app.use((req, res) => {
   res.status(404).json({
@@ -31,7 +36,7 @@ app.use((req, res) => {
   });
 });
 
-app.use((err, req, res, next) => {
+app.use((err, req, res, _next) => {
   console.error(err);
 
   res.status(err.statusCode || 500).json({

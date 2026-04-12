@@ -1,10 +1,10 @@
-const notFound = (req, res, next) => {
+const notFound = (req, res, _next) => {
   res.status(404).json({
     message: `Route not found: ${req.originalUrl}`
   });
 };
 
-const errorHandler = (err, req, res, next) => {
+const errorHandler = (err, req, res, _next) => {
   console.error(err);
 
   res.status(err.statusCode || 500).json({

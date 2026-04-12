@@ -2,10 +2,14 @@
   "name": "web",
   "private": true,
   "scripts": {
-    "dev": "concurrently -k -n gateway,auth,register,target,score,clock,read \"npm --prefix api-gateway run dev\" \"npm --prefix auth-service run dev\" \"npm --prefix register-service run dev\" \"npm --prefix target-service run dev\" \"npm --prefix score-service run dev\" \"npm --prefix clock-service run dev\" \"npm --prefix read-service run dev\"",
-    "dev:all": "concurrently -k -n gateway,auth,register,target,score,clock,mail,read \"npm --prefix api-gateway run dev\" \"npm --prefix auth-service run dev\" \"npm --prefix register-service run dev\" \"npm --prefix target-service run dev\" \"npm --prefix score-service run dev\" \"npm --prefix clock-service run dev\" \"npm --prefix mail-service run dev\" \"npm --prefix read-service run dev\""
+    "dev": "concurrently -k -n gateway,auth,register,target,score,clock \"npm --prefix api-gateway run dev\" \"npm --prefix auth-service run dev\" \"npm --prefix register-service run dev\" \"npm --prefix target-service run dev\" \"npm --prefix score-service run dev\" \"npm --prefix clock-service run dev\"",
+    "dev:all": "concurrently -k -n gateway,auth,register,target,score,clock,mail \"npm --prefix api-gateway run dev\" \"npm --prefix auth-service run dev\" \"npm --prefix register-service run dev\" \"npm --prefix target-service run dev\" \"npm --prefix score-service run dev\" \"npm --prefix clock-service run dev\" \"npm --prefix mail-service run dev\"",
+    "lint": "eslint .",
+    "test": "npm run test --prefix api-gateway && npm run test --prefix auth-service && npm run test --prefix register-service && npm run test --prefix target-service && npm run test --prefix score-service && npm run test --prefix clock-service && npm run test --prefix mail-service"
   },
   "devDependencies": {
-    "concurrently": "^9.0.1"
+    "concurrently": "^9.0.1",
+    "eslint": "^8.57.1",
+    "jest": "^29.7.0"
   }
 }

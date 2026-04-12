@@ -3,7 +3,7 @@ require('dotenv').config();
 const app = require('./src/app');
 const { connectDB } = require('./src/config/db');
 const { startScheduler } = require('./src/services/clockService');
-const { startClockConsumers } = require('./src/services/rabbitmqConsumer');
+const { startClockEventConsumers } = require('./src/services/clockEventConsumer');
 
 const PORT = process.env.PORT || 3005;
 
@@ -17,7 +17,7 @@ const startServer = async () => {
       startScheduler();
 
       try {
-        await startClockConsumers();
+        await startClockEventConsumers();
       } catch (error) {
         console.error(
           '[clock-service] Failed to start RabbitMQ consumers:',
